@@ -1,0 +1,43 @@
+.lang-switcher {
+  display: flex;
+  gap: 4px;
+  padding: 6px 0 2px;
+}
+
+/* Light variant — used outside dark sidebar */
+:host(.light) .lang-btn {
+  background: rgba(63,129,108,0.08);
+  border-color: rgba(63,129,108,0.3);
+  color: #3F816C;
+}
+:host(.light) .lang-btn:hover { background: rgba(63,129,108,0.15); color: #27500A; }
+:host(.light) .lang-btn.active {
+  background: #3F816C;
+  color: #fff;
+  border-color: #3F816C;
+}
+
+.lang-btn {
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.7);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  font-family: 'Poppins', sans-serif;
+}
+
+.lang-btn:hover {
+  background: rgba(255,255,255,0.22);
+  color: #fff;
+}
+
+.lang-btn.active {
+  background: rgba(255,255,255,0.28);
+  color: #fff;
+  border-color: rgba(255,255,255,0.45);
+}
