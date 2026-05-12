@@ -1,37 +1,52 @@
+// OpalTrace — Angular Material M3 theme
 
-// Include theming for Angular Material with `mat.theme()`.
-// This Sass mixin will define CSS variables that are used for styling Angular Material
-// components according to the Material 3 design spec.
-// Learn more about theming and how to use it for your application's
-// custom components at https://material.angular.dev/guide/theming
 @use '@angular/material' as mat;
 
 html {
   height: 100%;
   @include mat.theme((
     color: (
-      primary: mat.$azure-palette,
-      tertiary: mat.$blue-palette,
+      primary:   mat.$green-palette,
+      tertiary:  mat.$orange-palette,
     ),
-    typography: Roboto,
+    typography: Poppins,
     density: 0,
   ));
+
+  --mat-sys-primary:              #3F816C;
+  --mat-sys-on-primary:           #ffffff;
+  --mat-sys-primary-container:    #d0ece5;
+  --mat-sys-on-primary-container: #00382a;
+
+  --mat-sys-secondary:              #4a7766;
+  --mat-sys-on-secondary:           #ffffff;
+  --mat-sys-secondary-container:    #cde8df;
+  --mat-sys-on-secondary-container: #00201a;
+
+  --mat-sys-tertiary:              #FF914D;
+  --mat-sys-on-tertiary:           #ffffff;
+  --mat-sys-tertiary-container:    #ffe0cc;
+  --mat-sys-on-tertiary-container: #4a1900;
+
+  --mat-sys-surface:           #FFFAF1;
+  --mat-sys-surface-variant:   #f1ece3;
+  --mat-sys-on-surface:        #1a1a1a;
+  --mat-sys-on-surface-variant:#555550;
+
+  --mat-sys-outline:           #d0d0cc;
+  --mat-sys-outline-variant:   #e8e8e3;
+
+  --mat-sys-error:             #791F1F;
+  --mat-sys-on-error:          #ffffff;
+  --mat-sys-error-container:   #FCEBEB;
+  --mat-sys-on-error-container:#4e1010;
 }
 
 body {
-  // Default the application to a light color theme. This can be changed to
-  // `dark` to enable the dark color theme, or to `light dark` to defer to the
-  // user's system settings.
   color-scheme: light;
-
-  // Set a default background, font and text colors for the application using
-  // Angular Material's system-level CSS variables. Learn more about these
-  // variables at https://material.angular.dev/guide/system-variables
   background-color: var(--mat-sys-surface);
   color: var(--mat-sys-on-surface);
-  font: var(--mat-sys-body-medium);
-
-  // Reset the user agent margin.
+  font-family: 'Poppins', sans-serif;
   margin: 0;
   height: 100%;
 }
