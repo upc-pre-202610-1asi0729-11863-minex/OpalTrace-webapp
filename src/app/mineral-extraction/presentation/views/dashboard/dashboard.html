@@ -1,0 +1,115 @@
+<div>
+  <p class="page-title">{{ greetingKey() | translate }}, {{ greetingName() }}</p>
+  <p class="page-sub">{{ 'mineral-dashboard.sub' | translate }}</p>
+
+  <!-- Metric cards -->
+  <div class="metrics-grid" aria-live="polite">
+    <div class="metric-card info">
+      <div class="metric-val">{{ totalBatches() }}</div>
+      <div class="metric-lbl">{{ 'mineral-dashboard.active-batches' | translate }}</div>
+    </div>
+    <div class="metric-card warn">
+      <div class="metric-val">{{ inTransitCount() }}</div>
+      <div class="metric-lbl">{{ 'mineral-dashboard.in-transit' | translate }}</div>
+    </div>
+    <div class="metric-card danger">
+      <div class="metric-val">{{ activeAlertsCount() }}</div>
+      <div class="metric-lbl">{{ 'mineral-dashboard.anomalies' | translate }}</div>
+    </div>
+    <div class="metric-card success">
+      <div class="metric-val">{{ certifiedCount() }}</div>
+      <div class="metric-lbl">{{ 'mineral-dashboard.certified' | translate }}</div>
+    </div>
+  </div>
+
+  <!-- Offline banner -->
+  @if (pendingCount() > 0) {
+    <div class="offline-banner">
+      <i class="ti ti-wifi-off"></i>
+      <span>{{ pendingCount() }} {{ 'mineral-dashboard.pending-sync' | translate }}</span>
+      <a routerLink="/mineral/register" class="ot-btn ot-btn-sm" style="margin-left:auto">{{ 'mineral-dashboard.btn-register' | translate }}</a>
+    </div>
+  }
+
+  <!-- Recent batches -->
+  <div class="ot-card">
+    <div class="ot-card-title"><i class="ti ti-list"></i> {{ 'mineral-dashboard.recent' | translate }}</div>
+    <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr>
+            <th>{{ 'mineral-dashboard.col-id' | translate }}</th>
+            <th>{{ 'mineral-dashboard.col-mineral' | translate }}</th>
+            <th>{{ 'mineral-dashboard.col-weight' | translate }}</th>
+            <th>{{ 'mineral-dashboard.col-status' | translate }}</th>
+            <th>{{ 'mineral-dashboard.col-action' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (batch of batches(); track batch.batchId) {
+            <tr>
+              <td><code style="font-size:11px">{{ batch.batchId }}</code></td>
+              <td>{{ 'mineral.' + batch.mineral | translate }}</td>
+              <td>{{ batch.weightKg | number }}</td>
+              <td><span [class]="badgeClass(batch.status, batch.isBlocked)">{{ statusTranslateKey(batch) | translate }}</span></td>
+              <td style="display:flex;gap:6px;flex-wrap:wrap;">
+                <a routerLink="/mineral/qr" [queryParams]="{ batchId: batch.batchId }" class="ot-btn ot-btn-sm">
+                  <i class="ti ti-qrcode"></i> QR
+                </a>
+                @if (!batch.isBlocked) {
+                  <a [routerLink]="['/mineral/certificate', batch.batchId]"
+                     class="ot-btn ot-btn-sm"
+                     style="background:#EAF3DE;color:#27500A;border-color:#C0DD97;">
+                    <i class="ti ti-certificate"></i> {{ 'mineral-dashboard.btn-certificate' | translate }}
+                  </a>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Bar chart -->
+  <div class="ot-card">
+    <div class="ot-card-title"><i class="ti ti-chart-bar"></i> {{ 'mineral-dashboard.weekly-chart' | translate }}</div>
+    <div class="chart-bars" style="height:80px">
+      <div class="bar" style="height:60%;background:#B5D4F4" aria-label="Lunes: 5"></div>
+      <div class="bar" style="height:75%;background:#B5D4F4" aria-label="Martes: 7"></div>
+      <div class="bar" style="height:45%;background:#B5D4F4" aria-label="Miércoles: 4"></div>
+      <div class="bar" style="height:90%;background:#3F816C" aria-label="Jueves: 9 (hoy)"></div>
+      <div class="bar" style="height:65%;background:#B5D4F4" aria-label="Viernes: 6"></div>
+      <div class="bar" style="height:80%;background:#B5D4F4" aria-label="Sábado: 8"></div>
+      <div class="bar" style="height:55%;background:#B5D4F4" aria-label="Domingo: 5"></div>
+    </div>
+    <div class="chart-labels">
+      <span class="chart-lbl">L</span>
+      <span class="chart-lbl">M</span>
+      <span class="chart-lbl">X</span>
+      <span class="chart-lbl">J</span>
+      <span class="chart-lbl">V</span>
+      <span class="chart-lbl">S</span>
+      <span class="chart-lbl">D</span>
+    </div>
+  </div>
+
+  <!-- Quick actions -->
+  <div style="display:flex;gap:10px;flex-wrap:wrap">
+    <a routerLink="/mineral/register" class="ot-btn ot-btn-primary">
+      <i class="ti ti-plus"></i> {{ 'mineral-dashboard.btn-register' | translate }}
+    </a>
+    <a routerLink="/mineral/batches" class="ot-btn ot-btn-primary" style="background:#3F816C;">
+      <i class="ti ti-certificate"></i> {{ 'mineral-dashboard.btn-certificate' | translate }}
+    </a>
+    <a routerLink="/mineral/alerts" class="ot-btn">
+      <i class="ti ti-alert-triangle"></i> {{ 'mineral-dashboard.btn-alerts' | translate }} ({{ activeAlertsCount() }})
+    </a>
+    <a routerLink="/mineral/qr" class="ot-btn">
+      <i class="ti ti-qrcode"></i> {{ 'mineral-dashboard.btn-qr' | translate }}
+    </a>
+    <a routerLink="/custody/transfer" class="ot-btn">
+      <i class="ti ti-truck"></i> {{ 'mineral-dashboard.btn-custody' | translate }}
+    </a>
+  </div>
+</div>

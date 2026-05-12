@@ -1,0 +1,114 @@
+<div class="auth-page" style="align-items:flex-start; padding-top:40px">
+  <div class="auth-card" style="max-width:560px">
+    <div class="auth-logo">
+      <i class="ti ti-diamond"></i> OpalTrace
+    </div>
+
+    <h2 class="auth-title">Registro empresarial</h2>
+    <p class="auth-sub">Crea tu cuenta para empresa minera o joyera</p>
+
+    @if (errorMsg()) {
+      <div class="alert-box alert-danger" style="margin-bottom:16px">
+        <i class="ti ti-alert-circle"></i> {{ errorMsg() }}
+      </div>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      <!-- Segment -->
+      <div class="form-group">
+        <label class="form-label">Tipo de empresa</label>
+        <div style="display:flex;gap:10px">
+          <label class="segment-radio" [class.selected]="form.get('segment')?.value === 'MINING'">
+            <input type="radio" formControlName="segment" value="MINING">
+            <i class="ti ti-pickaxe"></i> Minería
+          </label>
+          <label class="segment-radio" [class.selected]="form.get('segment')?.value === 'JEWELRY'">
+            <input type="radio" formControlName="segment" value="JEWELRY">
+            <i class="ti ti-diamond"></i> Joyería
+          </label>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <!-- Company name -->
+        <div class="form-group">
+          <label class="form-label" for="companyName">Razón social *</label>
+          <input id="companyName" type="text" formControlName="companyName"
+                 placeholder="Empresa S.A.C."
+                 aria-required="true"
+                 [attr.aria-invalid]="fieldErr('companyName') || null">
+          @if (fieldErr('companyName')) {
+            <span class="field-error">La razón social es requerida</span>
+          }
+        </div>
+
+        <!-- RUC -->
+        <div class="form-group">
+          <label class="form-label" for="ruc">RUC (11 dígitos) *</label>
+          <input id="ruc" type="text" formControlName="ruc"
+                 placeholder="20512345678"
+                 maxlength="11"
+                 aria-required="true"
+                 [attr.aria-invalid]="fieldErr('ruc') || null">
+          @if (fieldErr('ruc')) {
+            @if (getErrors('ruc')['required']) {
+              <span class="field-error">El RUC es requerido</span>
+            } @else {
+              <span class="field-error">El RUC debe tener exactamente 11 dígitos</span>
+            }
+          }
+        </div>
+      </div>
+
+      <div class="form-row">
+        <!-- Email -->
+        <div class="form-group">
+          <label class="form-label" for="email">Correo corporativo *</label>
+          <input id="email" type="email" formControlName="email"
+                 placeholder="usuario@empresa.com"
+                 aria-required="true"
+                 [attr.aria-invalid]="fieldErr('email') || null">
+          @if (fieldErr('email')) {
+            @if (getErrors('email')['corporateEmail']) {
+              <span class="field-error">No se permiten correos públicos (gmail, hotmail, yahoo…)</span>
+            } @else {
+              <span class="field-error">Ingresa un correo válido</span>
+            }
+          }
+        </div>
+
+        <!-- Password -->
+        <div class="form-group">
+          <label class="form-label" for="password">Contraseña *</label>
+          <input id="password" type="password" formControlName="password"
+                 placeholder="Mínimo 8 caracteres"
+                 aria-required="true"
+                 [attr.aria-invalid]="fieldErr('password') || null">
+          @if (form.get('password')?.value) {
+            <div class="pw-strength">
+              <div class="pw-bar" [class]="pwStrength()"></div>
+              <span class="pw-label">{{ pwStrength() === 'weak' ? 'Débil' : pwStrength() === 'medium' ? 'Media' : 'Fuerte' }}</span>
+            </div>
+          }
+          @if (fieldErr('password')) {
+            <span class="field-error">Mínimo 8 caracteres requeridos</span>
+          }
+        </div>
+      </div>
+
+      <div class="info-note">
+        <i class="ti ti-info-circle"></i>
+        Se rechazan correos de dominio público (gmail, hotmail, yahoo). Use su correo corporativo.
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:16px">
+        <button type="submit" class="ot-btn ot-btn-primary" style="flex:1;justify-content:center">
+          <i class="ti ti-check"></i> Registrar empresa
+        </button>
+        <a routerLink="/auth/login" class="ot-btn" style="text-decoration:none">
+          <i class="ti ti-login"></i> Iniciar sesión
+        </a>
+      </div>
+    </form>
+  </div>
+</div>

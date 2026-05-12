@@ -1,0 +1,154 @@
+<div class="page-title"><i class="ti ti-credit-card"></i> {{ 'subscription.title' | translate }}</div>
+<p class="page-sub">{{ 'subscription.sub' | translate }}</p>
+
+<!-- Toast -->
+@if (toastMsg()) {
+  <div class="toast-msg">{{ toastMsg() }}</div>
+}
+
+<!-- Plan cards (always 3) -->
+<div class="plan-cards-3">
+  @for (card of planCards(); track card.id) {
+    <div class="plan-card"
+         [class.current]="isCurrent(card.id)"
+         [class.disabled]="card.locked">
+      @if (isCurrent(card.id)) {
+        <div style="margin-bottom:8px"><span class="badge badge-blue">{{ 'subscription.current-plan' | translate }}</span></div>
+      }
+      <div class="plan-name">{{ card.nameKey | translate }}</div>
+      <div class="plan-price">${{ card.price }}<span class="plan-freq">{{ 'subscription.per-month' | translate }}</span></div>
+
+      @for (feat of card.featureKeys; track feat) {
+        <div class="plan-feature"><i class="ti ti-check" style="color:#639922"></i> {{ feat | translate }}</div>
+      }
+
+      @if (card.locked) {
+        <div class="disabled-note"><i class="ti ti-lock"></i> {{ card.lockedMsgKey | translate }}</div>
+        <button class="ot-btn ot-btn-sm" style="margin-top:12px;width:100%;opacity:.45" disabled>{{ 'subscription.btn-unavailable' | translate }}</button>
+      } @else if (isCurrent(card.id)) {
+        <button class="ot-btn ot-btn-sm" style="margin-top:12px;width:100%;opacity:.55" disabled>{{ 'subscription.btn-current' | translate }}</button>
+      } @else if (store.activePlan() === 'GOLD' && card.id === 'PLATINUM') {
+        <button class="ot-btn ot-btn-primary ot-btn-sm" style="margin-top:12px;width:100%" (click)="openUpgrade(card.id)">
+          <i class="ti ti-arrow-up"></i> {{ 'subscription.btn-upgrade' | translate }}
+        </button>
+      } @else if (store.activePlan() === 'PLATINUM' && card.id === 'GOLD') {
+        <button class="ot-btn ot-btn-sm" style="margin-top:12px;width:100%" (click)="openDowngrade(card.id)">
+          <i class="ti ti-arrow-down"></i> {{ 'subscription.btn-downgrade' | translate }}
+        </button>
+      }
+    </div>
+  }
+</div>
+
+<!-- Billing history -->
+<div class="ot-card">
+  <div class="ot-card-title"><i class="ti ti-receipt"></i> {{ 'subscription.billing-history' | translate }}</div>
+  <div class="table-wrap">
+    @if (store.billingHistory().length === 0) {
+      <p style="color:#999;text-align:center;padding:20px 0;">{{ 'subscription.no-payments' | translate }}</p>
+    } @else {
+      <table>
+        <thead>
+          <tr>
+            <th>{{ 'subscription.date' | translate }}</th>
+            <th>{{ 'subscription.plan' | translate }}</th>
+            <th>{{ 'subscription.amount' | translate }}</th>
+            <th>{{ 'subscription.status' | translate }}</th>
+            <th>{{ 'subscription.receipt' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (record of store.billingHistory(); track record.date) {
+            <tr>
+              <td>{{ record.date }}</td>
+              <td>{{ record.plan }}</td>
+              <td>${{ record.amount }}</td>
+              <td><span class="badge"
+                        [class.badge-green]="record.status === 'COMPLETED'"
+                        [class.badge-amber]="record.status === 'PENDING'"
+                        [class.badge-red]="record.status === 'FAILED'">{{ ('subscription.status-' + record.status) | translate }}</span></td>
+              <td><button class="ot-btn ot-btn-sm" (click)="showToast('✓ Recibo PDF descargado')"><i class="ti ti-download"></i></button></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+</div>
+
+<!-- Cancel subscription -->
+<div class="ot-card">
+  <div class="ot-card-title" style="color:#791F1F"><i class="ti ti-ban"></i> {{ 'subscription.cancel' | translate }}</div>
+  <p style="font-size:13px;color:#666;margin-bottom:12px">{{ 'subscription.cancel-desc' | translate }}</p>
+  <button class="ot-btn ot-btn-danger ot-btn-sm" (click)="cancelModal.set(true)">
+    <i class="ti ti-ban"></i> {{ 'subscription.cancel' | translate }}
+  </button>
+</div>
+
+<!-- UPGRADE MODAL -->
+@if (upgradeModal()) {
+  <div class="modal-overlay" (click)="closeModals()">
+    <div class="modal-box" (click)="$event.stopPropagation()">
+      <h3 class="modal-title"><i class="ti ti-crown"></i> {{ 'layout.upgrade-title' | translate }}</h3>
+      <p style="font-size:13px;color:#555;margin-bottom:14px">{{ 'layout.upgrade-features' | translate }}</p>
+      <div style="margin-bottom:14px">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+          <span class="badge badge-green">+</span> {{ 'layout.feature-refinery' | translate }}
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+          <span class="badge badge-green">+</span> {{ 'layout.feature-esg' | translate }}
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span class="badge badge-green">+</span> {{ 'layout.feature-analytics' | translate }}
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">{{ 'onboarding.card-number' | translate }}</label>
+        <input type="text" placeholder="4242 4242 4242 4242" maxlength="19">
+      </div>
+      <div style="display:flex;gap:10px;margin-top:16px">
+        <button class="ot-btn" (click)="closeModals()">{{ 'layout.cancel' | translate }}</button>
+        <button class="ot-btn ot-btn-primary" style="flex:1;justify-content:center" (click)="confirmUpgrade()">
+          <i class="ti ti-check"></i> {{ 'layout.see-plans' | translate }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- DOWNGRADE MODAL -->
+@if (downgradeModal()) {
+  <div class="modal-overlay" (click)="closeModals()">
+    <div class="modal-box" (click)="$event.stopPropagation()">
+      <h3 class="modal-title" style="color:#791F1F"><i class="ti ti-arrow-down"></i> {{ 'subscription.downgrade' | translate }}</h3>
+      <div style="margin-bottom:14px">
+        <div class="alert-box alert-danger">{{ 'subscription.downgrade-w1' | translate }}</div>
+        <div class="alert-box alert-danger">{{ 'subscription.downgrade-w2' | translate }}</div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:16px">
+        <button class="ot-btn" (click)="closeModals()">{{ 'layout.cancel' | translate }}</button>
+        <button class="ot-btn ot-btn-danger" style="flex:1;justify-content:center" (click)="confirmDowngrade()">
+          {{ 'common.confirm' | translate }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- CANCEL MODAL -->
+@if (cancelModal()) {
+  <div class="modal-overlay" (click)="closeModals()">
+    <div class="modal-box" (click)="$event.stopPropagation()">
+      <h3 class="modal-title" style="color:#791F1F"><i class="ti ti-ban"></i> {{ 'subscription.cancel' | translate }}</h3>
+      <div class="alert-box alert-warning" style="margin-bottom:14px">
+        {{ 'subscription.cancel-warning' | translate }}
+      </div>
+      <div style="display:flex;gap:10px">
+        <button class="ot-btn" (click)="closeModals()">{{ 'layout.cancel' | translate }}</button>
+        <button class="ot-btn ot-btn-danger" style="flex:1;justify-content:center" (click)="confirmCancel()">
+          {{ 'subscription.cancel' | translate }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

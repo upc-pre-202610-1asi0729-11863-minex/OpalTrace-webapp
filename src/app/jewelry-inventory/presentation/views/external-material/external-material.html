@@ -1,0 +1,150 @@
+<section>
+  <h1 class="page-title">{{ 'external.title' | translate }}</h1>
+  <p class="page-sub">{{ 'external.sub' | translate }}</p>
+
+  @if (!isPlatinum()) {
+    <!-- Platinum upgrade gate -->
+    <div class="ot-card" style="text-align:center;padding:32px 24px;">
+      <i class="ti ti-lock" style="font-size:48px;color:#b07a20;margin-bottom:16px;display:block;"></i>
+      <h2 style="font-size:18px;font-weight:700;color:#1a1a1a;margin:0 0 8px;">{{ 'subscription.plan-platinum-jewelry' | translate }}</h2>
+      <p style="font-size:14px;color:#666;margin:0 0 20px;max-width:380px;margin-inline:auto;">{{ 'external.platinum-required' | translate }}</p>
+      <a class="ot-btn ot-btn-primary" href="/subscription">
+        <i class="ti ti-arrow-up-circle"></i> {{ 'subscription.upgrade-cta' | translate }}
+      </a>
+    </div>
+  } @else {
+
+  <!-- Warning banner -->
+  <div style="background:#FEF3EE;border:1px solid #f5c4a0;border-radius:8px;padding:12px 14px;margin-bottom:16px;display:flex;align-items:flex-start;gap:8px;">
+    <i class="ti ti-lock" style="color:#E8652A;font-size:18px;flex-shrink:0;margin-top:1px;"></i>
+    <div style="font-size:12px;color:#7a3010;line-height:1.6;">
+      {{ 'external.warning-detail' | translate }}
+    </div>
+  </div>
+
+  @if (submitted()) {
+    <!-- Success state -->
+    <div style="background:#FEF3EE;border:1px solid #f5c4a0;border-radius:10px;padding:16px 18px;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+        <i class="ti ti-lock" style="color:#E8652A;font-size:22px;"></i>
+        <div>
+          <div style="font-size:14px;font-weight:600;color:#7a3010;">{{ 'external.success-title' | translate }}</div>
+          <div style="font-size:12px;color:#a05020;margin-top:2px;">{{ 'external.success-detail' | translate }}</div>
+        </div>
+      </div>
+      <div style="background:#fff;border-radius:8px;padding:12px 14px;margin-top:4px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div>
+            <div style="font-size:10px;color:#888;margin-bottom:2px;">{{ 'external.field-id' | translate }}</div>
+            <code style="font-size:13px;color:#E8652A;font-weight:600;">{{ extId() }}</code>
+          </div>
+          <div>
+            <div style="font-size:10px;color:#888;margin-bottom:2px;">{{ 'external.name-label' | translate }}</div>
+            <div style="font-size:12px;font-weight:500;color:#1a1a1a;">{{ mineralType() }}</div>
+          </div>
+          <div>
+            <div style="font-size:10px;color:#888;margin-bottom:2px;">{{ 'external.weight-label' | translate }}</div>
+            <div style="font-size:12px;font-weight:500;color:#1a1a1a;">{{ weightG() }} g</div>
+          </div>
+          <div>
+            <div style="font-size:10px;color:#888;margin-bottom:2px;">{{ 'external.supplier-label' | translate }}</div>
+            <div style="font-size:12px;font-weight:500;color:#1a1a1a;">{{ supplier() }}</div>
+          </div>
+        </div>
+        <div style="margin-top:10px;padding:6px 10px;background:#FEF0EE;border-radius:6px;font-size:11px;color:#7a1f1f;display:flex;align-items:center;gap:6px;">
+          <i class="ti ti-shield-x" style="font-size:13px;"></i>
+          {{ 'external.classification' | translate }}
+        </div>
+      </div>
+    </div>
+    <button class="ot-btn" (click)="reset()">
+      <i class="ti ti-plus"></i> {{ 'external.add-another' | translate }}
+    </button>
+
+  } @else {
+    <!-- Form -->
+    <div class="ot-card">
+      <div class="ot-card-title"><i class="ti ti-package"></i> {{ 'external.card-title' | translate }}</div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">{{ 'external.mineral-type' | translate }} <span style="color:#e55;">*</span></label>
+          <select [value]="mineralType()" (change)="mineralType.set($any($event.target).value)">
+            @for (t of mineralTypes; track t) {
+              <option [value]="t">{{ t }}</option>
+            }
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">{{ 'external.weight-label' | translate }} (g) <span style="color:#e55;">*</span></label>
+          <input
+            type="number"
+            [value]="weightG()"
+            (input)="weightG.set(+$any($event.target).value || null)"
+            [placeholder]="'external.weight-placeholder' | translate"
+            min="1" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">{{ 'external.supplier-label' | translate }} <span style="color:#e55;">*</span></label>
+        <input
+          type="text"
+          [value]="supplier()"
+          (input)="supplier.set($any($event.target).value)"
+          [placeholder]="'external.supplier-placeholder' | translate" />
+        @if (supplier().trim() === '') {
+          <p style="font-size:11px;color:#e55;margin-top:3px;">
+            <i class="ti ti-alert-circle"></i> {{ 'external.supplier-required' | translate }}
+          </p>
+        }
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">{{ 'external.ruc-label' | translate }}</label>
+          <input
+            type="text"
+            [value]="ruc()"
+            (input)="ruc.set($any($event.target).value)"
+            placeholder="20XXXXXXXXX"
+            maxlength="11" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">{{ 'external.entry-date' | translate }} <span style="color:#e55;">*</span></label>
+          <input
+            type="date"
+            [value]="entryDate()"
+            (input)="entryDate.set($any($event.target).value)" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">{{ 'external.invoice-label' | translate }}</label>
+        <input
+          type="text"
+          [value]="invoice()"
+          (input)="invoice.set($any($event.target).value)"
+          [placeholder]="'external.invoice-placeholder' | translate" />
+      </div>
+
+      <div style="padding:10px 12px;background:#f7f7f5;border-radius:6px;font-size:11px;color:#666;margin-bottom:16px;">
+        <strong>{{ 'external.classification' | translate }}</strong>
+        <div style="margin-top:4px;display:flex;gap:12px;flex-wrap:wrap;">
+          <code style="font-size:10px;">isCertifiedSource: false</code>
+          <code style="font-size:10px;">canGenerateCertificate: false</code>
+          <code style="font-size:10px;">certState: null</code>
+        </div>
+      </div>
+
+      <button
+        class="ot-btn ot-btn-primary"
+        (click)="submit()"
+        [disabled]="!canSubmit()">
+        <i class="ti ti-package"></i> {{ 'external.btn' | translate }}
+      </button>
+    </div>
+  }
+
+  } <!-- end @else isPlatinum -->
+</section>

@@ -1,0 +1,318 @@
+<section>
+
+  <!-- Header breadcrumb -->
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;font-size:12px;color:#666;">
+    <a routerLink="/mineral/batches" style="color:#3F816C;display:flex;align-items:center;gap:4px;text-decoration:none;">
+      <i class="ti ti-arrow-left"></i> {{ 'my-batches.title' | translate }}
+    </a>
+    <i class="ti ti-chevron-right" style="font-size:11px;"></i>
+    <code style="font-size:11px;">{{ batchId() }}</code>
+    <i class="ti ti-chevron-right" style="font-size:11px;"></i>
+    <span style="color:#1a1a1a;font-weight:500;">{{ 'batch-cert.breadcrumb' | translate }}</span>
+  </div>
+
+  @if (!batch()) {
+    <div class="alert-box alert-warning">
+      <i class="ti ti-alert-triangle"></i>
+      {{ 'batch-cert.not-found' | translate }} <code>{{ batchId() }}</code>
+    </div>
+  } @else {
+
+    <!-- Immutable banner -->
+    <div style="background:#EAF3DE;border:1px solid #C0DD97;border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+      <i class="ti ti-lock" style="color:#3F816C;font-size:18px;flex-shrink:0;"></i>
+      <div style="font-size:12px;color:#1e4d3a;line-height:1.5;">
+        <strong>{{ 'batch-cert.immutable-title' | translate }}</strong>
+        {{ 'batch-cert.immutable-body' | translate }}
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div style="display:flex;border-bottom:1px solid #e0e0e0;margin-bottom:16px;">
+      <button
+        class="ot-btn ot-btn-sm"
+        (click)="switchTab('cert')"
+        style="border:none;border-bottom:2px solid {{ activeTab()==='cert' ? '#3F816C' : 'transparent' }};border-radius:0;padding:8px 16px;font-size:12px;background:transparent;"
+        [style.color]="activeTab()==='cert' ? '#3F816C' : '#666'"
+        [style.fontWeight]="activeTab()==='cert' ? '600' : '400'"
+        [style.borderBottom]="activeTab()==='cert' ? '2px solid #3F816C' : '2px solid transparent'">
+        <i class="ti ti-certificate"></i> {{ 'batch-cert.tab-cert' | translate }}
+      </button>
+      <button
+        class="ot-btn ot-btn-sm"
+        (click)="switchTab('events')"
+        style="border:none;border-radius:0;padding:8px 16px;font-size:12px;background:transparent;"
+        [style.color]="activeTab()==='events' ? '#3F816C' : '#666'"
+        [style.fontWeight]="activeTab()==='events' ? '600' : '400'"
+        [style.borderBottom]="activeTab()==='events' ? '2px solid #3F816C' : '2px solid transparent'">
+        <i class="ti ti-timeline"></i> {{ 'batch-cert.tab-events' | translate }}
+      </button>
+    </div>
+
+    <!-- ═══ TAB 1: CERTIFICADO DE ORIGEN ═══ -->
+    @if (activeTab() === 'cert') {
+      <div style="background:#fff;border:0.5px solid #e0e0e0;border-radius:10px;overflow:hidden;margin-bottom:16px;">
+
+        <!-- Cert header (green) -->
+        <div style="background:#3F816C;padding:20px 24px;display:flex;align-items:center;justify-content:space-between;">
+          <div style="display:flex;align-items:center;gap:14px;">
+            <div style="width:48px;height:48px;border-radius:50%;background:#F5E6C8;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <i class="ti ti-certificate" style="color:#3F816C;font-size:22px;"></i>
+            </div>
+            <div>
+              <div style="color:#fff;font-size:15px;font-weight:600;">{{ 'batch-cert.title' | translate }}</div>
+              <div style="color:rgba(255,255,255,0.75);font-size:11px;margin-top:2px;">OpalTrace by MINEX · Trazabilidad Minera Responsable · Perú</div>
+              <div style="margin-top:6px;">
+                <span style="background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.35);border-radius:20px;padding:3px 10px;font-size:10px;color:#fff;display:inline-flex;align-items:center;gap:4px;">
+                  <i class="ti ti-shield-check" style="font-size:10px;"></i> {{ 'batch-cert.verified-chain' | translate }}
+                </span>
+              </div>
+            </div>
+          </div>
+          <div style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);border-radius:8px;padding:10px 14px;text-align:right;">
+            <div style="font-size:10px;color:rgba(255,255,255,0.65);margin-bottom:3px;">{{ 'batch-cert.cert-number' | translate }}</div>
+            <div style="font-size:13px;font-weight:600;color:#fff;font-family:monospace;">{{ certId() }}</div>
+            <div style="font-size:10px;color:rgba(255,255,255,0.55);margin-top:4px;">{{ 'batch-cert.issued' | translate }}: {{ batch()!.timestamp | date:'dd/MM/yyyy' }}</div>
+          </div>
+        </div>
+
+        <!-- Cert body -->
+        <div style="padding:20px 24px;">
+
+          <!-- Sección: datos del lote -->
+          <div style="margin-bottom:20px;">
+            <div style="font-size:11px;font-weight:600;color:#666;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;padding-bottom:6px;border-bottom:0.5px solid #e0e0e0;display:flex;align-items:center;gap:6px;">
+              <i class="ti ti-package" style="color:#3F816C;font-size:14px;"></i> {{ 'batch-cert.section-batch' | translate }}
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+              <div style="background:#f7f7f5;border-radius:8px;padding:10px 12px;">
+                <div style="font-size:10px;color:#888;margin-bottom:3px;">{{ 'batch-cert.field-id' | translate }}</div>
+                <div style="font-size:12px;font-family:monospace;color:#3F816C;font-weight:600;">{{ batch()!.batchId }}</div>
+              </div>
+              <div style="background:#f7f7f5;border-radius:8px;padding:10px 12px;">
+                <div style="font-size:10px;color:#888;margin-bottom:3px;">{{ 'batch-cert.field-mineral' | translate }}</div>
+                <div style="font-size:12px;font-weight:500;color:#1a1a1a;">{{ batch()!.mineral }}</div>
+              </div>
+              <div style="background:#f7f7f5;border-radius:8px;padding:10px 12px;">
+                <div style="font-size:10px;color:#888;margin-bottom:3px;">{{ 'batch-cert.field-weight' | translate }}</div>
+                <div style="font-size:12px;font-weight:500;color:#1a1a1a;">{{ batch()!.weightKg }} kg</div>
+              </div>
+              <div style="background:#f7f7f5;border-radius:8px;padding:10px 12px;">
+                <div style="font-size:10px;color:#888;margin-bottom:3px;">{{ 'batch-cert.field-extraction' | translate }}</div>
+                <div style="font-size:12px;font-weight:500;color:#1a1a1a;">{{ 'batch-cert.method-openpit' | translate }}</div>
+              </div>
+              <div style="background:#f7f7f5;border-radius:8px;padding:10px 12px;">
+                <div style="font-size:10px;color:#888;margin-bottom:3px;">{{ 'batch-cert.field-registered' | translate }}</div>
+                <div style="font-size:12px;font-weight:500;color:#1a1a1a;">{{ batch()!.timestamp | date:'dd/MM/yyyy' }}</div>
+              </div>
+              <div style="background:#f7f7f5;border-radius:8px;padding:10px 12px;">
+                <div style="font-size:10px;color:#888;margin-bottom:3px;">{{ 'batch-cert.field-state' | translate }}</div>
+                <span style="display:inline-flex;align-items:center;gap:4px;background:#EAF3DE;color:#27500A;border-radius:20px;padding:2px 9px;font-size:10px;font-weight:600;">
+                  <i class="ti ti-shield-check" style="font-size:10px;"></i> {{ 'batch-cert.origin-certified' | translate }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sección: origen geográfico -->
+          <div style="margin-bottom:20px;">
+            <div style="font-size:11px;font-weight:600;color:#666;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;padding-bottom:6px;border-bottom:0.5px solid #e0e0e0;display:flex;align-items:center;gap:6px;">
+              <i class="ti ti-map-pin" style="color:#3F816C;font-size:14px;"></i> {{ 'batch-cert.section-origin' | translate }}
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+              <div style="background:#f7f7f5;border-radius:8px;padding:10px 12px;">
+                <div style="font-size:10px;color:#888;margin-bottom:3px;">{{ 'batch-cert.field-company' | translate }}</div>
+                <div style="font-size:12px;font-weight:500;color:#1a1a1a;">Minera Andina S.A.C.</div>
+              </div>
+              <div style="background:#f7f7f5;border-radius:8px;padding:10px 12px;">
+                <div style="font-size:10px;color:#888;margin-bottom:3px;">{{ 'batch-cert.field-zone' | translate }}</div>
+                <div style="font-size:12px;font-weight:500;color:#1a1a1a;">Cajamarca Norte — Zona A</div>
+              </div>
+              <div style="background:#f7f7f5;border-radius:8px;padding:10px 12px;">
+                <div style="font-size:10px;color:#888;margin-bottom:3px;">{{ 'batch-cert.field-gps' | translate }}</div>
+                <div style="font-size:11px;font-family:monospace;color:#3F816C;">{{ batch()!.gpsLat.toFixed(4) }}°S, {{ batch()!.gpsLon.toFixed(4) }}°W</div>
+              </div>
+              <div style="background:#f7f7f5;border-radius:8px;padding:10px 12px;">
+                <div style="font-size:10px;color:#888;margin-bottom:3px;">{{ 'batch-cert.field-minem' | translate }}</div>
+                <div style="font-size:12px;font-weight:500;color:#3F816C;"><i class="ti ti-circle-check"></i> {{ 'batch-cert.verified' | translate }}</div>
+              </div>
+              <div style="background:#f7f7f5;border-radius:8px;padding:10px 12px;">
+                <div style="font-size:10px;color:#888;margin-bottom:3px;">{{ 'batch-cert.field-env-permit' | translate }}</div>
+                <div style="font-size:11px;font-family:monospace;color:#3F816C;">PA-{{ batch()!.timestamp | date:'yyyy' }}-{{ batch()!.id }}</div>
+              </div>
+              <div style="background:#f7f7f5;border-radius:8px;padding:10px 12px;">
+                <div style="font-size:10px;color:#888;margin-bottom:3px;">{{ 'batch-cert.field-tx' | translate }}</div>
+                <div style="font-size:10px;font-family:monospace;color:#3F816C;">{{ batch()!.txHash }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sección: cadena de custodia (timeline) -->
+          <div style="margin-bottom:20px;">
+            <div style="font-size:11px;font-weight:600;color:#666;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:14px;padding-bottom:6px;border-bottom:0.5px solid #e0e0e0;display:flex;align-items:center;gap:6px;">
+              <i class="ti ti-route" style="color:#3F816C;font-size:14px;"></i> {{ 'batch-cert.section-chain' | translate }}
+            </div>
+            <div style="position:relative;padding-left:24px;">
+              <div style="position:absolute;left:8px;top:6px;bottom:6px;width:1.5px;background:#e0e0e0;"></div>
+              @for (ev of events(); track ev.eventType) {
+                <div style="position:relative;margin-bottom:16px;">
+                  <div style="position:absolute;left:-20px;top:3px;width:16px;height:16px;border-radius:50%;background:#EAF3DE;border:1.5px solid #C0DD97;display:flex;align-items:center;justify-content:center;">
+                    <i class="ti ti-check" style="color:#3F816C;font-size:9px;"></i>
+                  </div>
+                  <div style="font-size:12px;font-weight:600;color:#1a1a1a;">{{ ev.label }}</div>
+                  <div style="font-size:11px;color:#666;margin-top:2px;line-height:1.5;">{{ ev.actor }} · {{ ev.detail }}</div>
+                  <div style="font-size:10px;color:#999;margin-top:2px;">{{ ev.timestamp | date:'dd/MM/yyyy HH:mm' }}</div>
+                  <div style="margin-top:4px;display:inline-block;background:#EAF3DE;padding:2px 8px;border-radius:4px;">
+                    <span style="font-size:10px;font-family:monospace;color:#3F816C;">{{ ev.txHash }} · {{ 'batch-cert.immutable' | translate }}</span>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Sección: QR + validez -->
+          <div style="margin-bottom:8px;">
+            <div style="font-size:11px;font-weight:600;color:#666;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:12px;padding-bottom:6px;border-bottom:0.5px solid #e0e0e0;display:flex;align-items:center;gap:6px;">
+              <i class="ti ti-shield-check" style="color:#3F816C;font-size:14px;"></i> {{ 'batch-cert.section-validity' | translate }}
+            </div>
+            <div style="display:flex;gap:16px;align-items:stretch;">
+              <!-- QR -->
+              <div style="background:#f7f7f5;border-radius:8px;padding:14px;text-align:center;flex-shrink:0;width:130px;">
+                <img
+                  [src]="'https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=' + encodeURIComponent('https://opaltrace.com/verify/' + batch()!.batchId)"
+                  alt="QR Trazabilidad"
+                  width="80" height="80"
+                  style="border-radius:6px;border:1.5px solid #3F816C;margin:0 auto 8px;display:block;" />
+                <div style="font-size:10px;color:#666;line-height:1.4;">QR de<br>Trazabilidad<br>B2B</div>
+              </div>
+              <!-- Validity table -->
+              <div style="flex:1;background:#f7f7f5;border-radius:8px;padding:14px;">
+                <div style="font-size:12px;font-weight:600;color:#1a1a1a;margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+                  <i class="ti ti-lock" style="color:#3F816C;font-size:14px;"></i> {{ 'batch-cert.validity-title' | translate }}
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:0.5px solid #e0e0e0;font-size:11px;">
+                  <span style="color:#666;">{{ 'batch-cert.field-cert-num' | translate }}</span>
+                  <span style="font-weight:500;font-family:monospace;font-size:10px;color:#1a1a1a;">{{ certId() }}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:0.5px solid #e0e0e0;font-size:11px;">
+                  <span style="color:#666;">{{ 'batch-cert.field-sha' | translate }}</span>
+                  <span style="font-weight:500;font-family:monospace;font-size:10px;color:#3F816C;">{{ batch()!.txHash.slice(0,16) }}...</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:0.5px solid #e0e0e0;font-size:11px;">
+                  <span style="color:#666;">{{ 'batch-cert.field-issuer' | translate }}</span>
+                  <span style="font-weight:500;font-size:11px;color:#1a1a1a;">OpalTrace / MINEX</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:0.5px solid #e0e0e0;font-size:11px;">
+                  <span style="color:#666;">{{ 'batch-cert.field-issue-date' | translate }}</span>
+                  <span style="font-weight:500;font-size:11px;color:#1a1a1a;">{{ batch()!.timestamp | date:'dd/MM/yyyy' }}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:5px 0;font-size:11px;">
+                  <span style="color:#666;">{{ 'batch-cert.field-immutable-reg' | translate }}</span>
+                  <span style="font-weight:500;color:#3F816C;font-size:11px;"><i class="ti ti-circle-check"></i> {{ 'batch-cert.verified' | translate }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Note box -->
+          <div style="background:#F5E6C8;border-radius:8px;padding:10px 14px;font-size:11px;color:#5a3e1b;line-height:1.6;margin-top:16px;">
+            <strong>{{ 'batch-cert.note-title' | translate }}:</strong> {{ 'batch-cert.note-body' | translate }} <code>{{ batchId() }}</code>.
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="ot-btn ot-btn-primary">
+          <i class="ti ti-download"></i> {{ 'batch-cert.btn-pdf' | translate }}
+        </button>
+        <button class="ot-btn">
+          <i class="ti ti-printer"></i> {{ 'batch-cert.btn-print' | translate }}
+        </button>
+        <button class="ot-btn">
+          <i class="ti ti-share"></i> {{ 'batch-cert.btn-share' | translate }}
+        </button>
+        <a routerLink="/mineral/batches" class="ot-btn">
+          <i class="ti ti-arrow-left"></i> {{ 'batch-cert.btn-back' | translate }}
+        </a>
+      </div>
+    }
+
+    <!-- ═══ TAB 2: HISTORIAL DE EVENTOS ═══ -->
+    @if (activeTab() === 'events') {
+
+      <!-- Summary chips -->
+      <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:100px;background:#f7f7f5;border-radius:8px;padding:10px;">
+          <div style="font-size:10px;color:#888;margin-bottom:3px;">{{ 'batch-cert.field-id' | translate }}</div>
+          <div style="font-size:11px;font-family:monospace;color:#3F816C;background:#EAF3DE;padding:2px 7px;border-radius:4px;display:inline-block;">{{ batchId() }}</div>
+        </div>
+        <div style="flex:1;min-width:100px;background:#f7f7f5;border-radius:8px;padding:10px;">
+          <div style="font-size:10px;color:#888;margin-bottom:3px;">{{ 'batch-cert.field-mineral' | translate }}</div>
+          <div style="font-size:13px;font-weight:500;color:#1a1a1a;">{{ batch()!.mineral }} · {{ batch()!.weightKg }} kg</div>
+        </div>
+        <div style="flex:1;min-width:100px;background:#f7f7f5;border-radius:8px;padding:10px;">
+          <div style="font-size:10px;color:#888;margin-bottom:3px;">{{ 'batch-cert.events-count' | translate }}</div>
+          <div style="font-size:13px;font-weight:500;color:#3F816C;">{{ events().length }} {{ 'batch-cert.events-label' | translate }}</div>
+        </div>
+        <div style="flex:1;min-width:100px;background:#f7f7f5;border-radius:8px;padding:10px;">
+          <div style="font-size:10px;color:#888;margin-bottom:3px;">{{ 'batch-cert.field-state' | translate }}</div>
+          <span style="display:inline-flex;align-items:center;gap:4px;background:#EAF3DE;color:#27500A;border-radius:20px;padding:2px 9px;font-size:10px;font-weight:600;">
+            <i class="ti ti-shield-check" style="font-size:10px;"></i> {{ 'batch-cert.origin-certified' | translate }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Timeline -->
+      <div class="ot-card" style="border:1px solid #b2dfc9;background:#f7fcfa;">
+        <div class="ot-card-title" style="color:#3F816C;margin-bottom:16px;">
+          <i class="ti ti-map-2"></i> {{ 'batch-cert.events-table-title' | translate }}
+          <span style="margin-left:auto;display:inline-flex;align-items:center;gap:4px;background:#EAF3DE;border-radius:20px;padding:3px 10px;font-size:10px;color:#27500A;font-weight:600;">
+            <i class="ti ti-lock" style="font-size:10px;"></i> {{ 'batch-cert.immutable-sha' | translate }}
+          </span>
+        </div>
+
+        <div style="position:relative;padding-left:32px;">
+          <!-- Vertical line -->
+          <div style="position:absolute;left:11px;top:8px;bottom:8px;width:2px;background:linear-gradient(to bottom,#3b82f6,#3F816C);border-radius:2px;"></div>
+
+          @for (ev of events(); track ev.eventType) {
+            <div style="position:relative;margin-bottom:20px;display:flex;gap:12px;align-items:flex-start;">
+              <!-- Dot -->
+              <div style="position:absolute;left:-32px;top:2px;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;"
+                   [style.background]="ev.dot === 'green' ? '#3F816C' : ev.dot === 'amber' ? '#e8a020' : '#3b82f6'">
+                <i class="ti {{ ev.icon }}" style="font-size:11px;color:#fff;"></i>
+              </div>
+              <!-- Card -->
+              <div style="flex:1;background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:10px 14px;">
+                <p style="font-size:13px;font-weight:600;color:#222;margin:0 0 4px;">{{ ev.label }}</p>
+                <p style="font-size:11px;color:#666;margin:0 0 2px;">
+                  <i class="ti ti-user" style="font-size:11px;"></i>
+                  {{ 'batch-cert.col-actor' | translate }}: <strong>{{ ev.actor }}</strong>
+                </p>
+                <p style="font-size:11px;color:#777;margin:0 0 2px;">
+                  <i class="ti ti-info-circle" style="font-size:11px;"></i> {{ ev.detail }}
+                </p>
+                <p style="font-size:11px;color:#888;margin:0 0 2px;">
+                  <i class="ti ti-calendar" style="font-size:11px;"></i>
+                  {{ ev.timestamp | date:'dd/MM/yyyy HH:mm' }}
+                </p>
+                <p style="font-size:10px;color:#aaa;margin:0;font-family:monospace;">
+                  {{ 'batch-cert.col-hash' | translate }}: {{ ev.txHash }}
+                </p>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <button class="ot-btn">
+          <i class="ti ti-download"></i> {{ 'batch-cert.btn-export-csv' | translate }}
+        </button>
+      </div>
+    }
+
+  }
+</section>

@@ -1,0 +1,214 @@
+<section class="split-batch-page">
+  <h1 class="page-title">{{ 'refinery.split-title' | translate }}</h1>
+  <p class="page-sub">{{ 'refinery.split-sub' | translate }}</p>
+
+  <!-- Upgrade wall for non-PLATINUM -->
+  @if (!isPlatinum()) {
+    <div class="upgrade-wall">
+      <div class="upgrade-icon">&#128274;</div>
+      <div class="upgrade-title">{{ 'refinery.upgrade-title' | translate }}</div>
+      <div class="upgrade-sub">{{ 'refinery.upgrade-split-sub' | translate }}</div>
+      <a href="/subscriptions" class="ot-btn ot-btn-primary" style="margin-top:16px;">
+        &#11014; {{ 'refinery.upgrade-btn' | translate }}
+      </a>
+    </div>
+  } @else {
+
+  <!-- Success result: sublots created -->
+  @if (result()?.success) {
+    <div class="alert-box alert-success" role="status">
+      <strong>&#10003; {{ 'refinery.success-split' | translate }}</strong>
+      {{ result()!.sublots!.length }} {{ 'refinery.success-split-from' | translate }}
+      <code>{{ selectedBatchId }}</code>.
+    </div>
+
+    <div class="ot-card">
+      <div class="ot-card-title">&#128230; {{ 'refinery.sublots-title' | translate }}</div>
+      <table>
+        <thead>
+          <tr>
+            <th>{{ 'refinery.col-sublot-id' | translate }}</th>
+            <th>{{ 'refinery.col-parent' | translate }}</th>
+            <th>{{ 'refinery.col-weight-kg' | translate }}</th>
+            <th>{{ 'refinery.col-status' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (sub of result()!.sublots!; track sub.id) {
+            <tr>
+              <td><code style="font-size:11px;">{{ sub.id }}</code></td>
+              <td><code style="font-size:11px;">{{ sub.parentBatchId }}</code></td>
+              <td>{{ sub.weightKg }}</td>
+              <td><span class="badge badge-green">{{ sub.status }}</span></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <button type="button" class="ot-btn" (click)="onReset()">
+      &#43; {{ 'refinery.btn-split-another' | translate }}
+    </button>
+  }
+
+  <!-- Error result -->
+  @if (result() && !result()!.success) {
+    <div class="alert-box alert-danger" role="alert">
+      <strong>&#10005; Error:</strong> {{ result()!.error }}
+    </div>
+  }
+
+  <!-- Split form (shown when no successful result yet) -->
+  @if (!result()?.success) {
+    <div class="ot-card">
+      <div class="ot-card-title">&#9986; {{ 'refinery.form-split-title' | translate }}</div>
+
+      <!-- Batch selector -->
+      <div class="form-group">
+        <label class="form-label" for="parentBatch">{{ 'refinery.parent-label' | translate }}</label>
+        @if (availableBatches().length === 0) {
+          <p style="font-size:13px;color:#888;">
+            {{ 'refinery.no-batches-split' | translate }}
+          </p>
+        } @else {
+          <select id="parentBatch" name="parentBatch" [(ngModel)]="selectedBatchId">
+            <option value="" disabled>{{ 'refinery.parent-placeholder' | translate }}</option>
+            @for (b of availableBatches(); track b.batchId) {
+              <option [value]="b.batchId">
+                {{ b.batchId }} · {{ b.mineral ?? 'Mineral' }} · {{ b.weightKg }} kg
+              </option>
+            }
+          </select>
+        }
+      </div>
+
+      <!-- Parent batch summary -->
+      @if (selectedBatch()) {
+        <div style="background:#f9f9f7;border:1px solid #e8e8e4;border-radius:8px;padding:10px 14px;margin-bottom:16px;">
+          <div style="font-size:12px;color:#555;font-weight:600;margin-bottom:4px;">
+            {{ 'refinery.parent-batch-info' | translate }} <code>{{ selectedBatch()!.batchId }}</code>
+          </div>
+          <div style="font-size:13px;">
+            <strong>{{ 'refinery.total-weight' | translate }} {{ selectedBatch()!.weightKg }} kg</strong>
+          </div>
+          <div style="font-size:12px;color:#888;margin-top:4px;">
+            {{ 'refinery.mineral-info' | translate }} {{ selectedBatch()!.mineral ?? '—' }} ·
+            {{ 'refinery.col-status' | translate }}: {{ selectedBatch()!.status }}
+          </div>
+        </div>
+      }
+
+      <!-- Sublot weight inputs -->
+      <div style="font-size:13px;font-weight:600;color:#333;margin-bottom:10px;">
+        {{ 'refinery.sublot-weights-label' | translate }}
+        <span style="font-size:11px;font-weight:400;color:#888;margin-left:8px;">
+          {{ 'refinery.sublot-weights-hint' | translate }}
+        </span>
+      </div>
+
+      @for (w of sublotWeights; track $index) {
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+          <div style="min-width:32px;font-size:13px;font-weight:600;color:#555;">
+            {{ sublotLabel($index) }}
+          </div>
+          <div class="form-group" style="flex:1;margin:0;">
+            <input
+              type="number"
+              [name]="'sublot-' + $index"
+              [value]="sublotWeights[$index]"
+              (input)="updateWeight($index, +$any($event.target).value)"
+              min="0.1"
+              step="0.1"
+              [placeholder]="'refinery.weight-kg-placeholder' | translate" />
+          </div>
+          @if (sublotWeights.length > 2) {
+            <button
+              type="button"
+              class="ot-btn"
+              style="padding:4px 10px;font-size:13px;color:#c0392b;"
+              (click)="removeSublot($index)"
+              [attr.aria-label]="'Remove sublot ' + sublotLabel($index)">
+              &#10005;
+            </button>
+          }
+        </div>
+      }
+
+      <!-- Sum validation indicator -->
+      @if (selectedBatch()) {
+        <div style="margin-top:8px;padding:8px 12px;border-radius:6px;font-size:13px;"
+          [style.background]="sumMatchesParent() ? '#f0f9f0' : '#fff8f0'"
+          [style.border]="sumMatchesParent() ? '1px solid #4caf50' : '1px solid #ff9800'">
+          <strong>{{ 'refinery.sum-current' | translate }} {{ sublotSum() }} kg</strong>
+          /
+          <strong>{{ 'refinery.required-weight' | translate }} {{ selectedBatch()!.weightKg }} kg</strong>
+          @if (sumMatchesParent()) {
+            <span style="color:#27500A;margin-left:8px;">&#10003; {{ 'refinery.sum-correct' | translate }}</span>
+          } @else {
+            <span style="color:#e67e22;margin-left:8px;">
+              {{ 'refinery.sum-diff' | translate }} {{ sumDiff().toFixed(2) }} kg
+            </span>
+          }
+        </div>
+      }
+
+      <!-- Add sublot button -->
+      <button
+        type="button"
+        class="ot-btn"
+        style="margin-top:12px;"
+        (click)="addSublot()">
+        &#43; {{ 'refinery.btn-add-sublot' | translate }}
+      </button>
+
+      <!-- Confirm button -->
+      <div style="margin-top:16px;">
+        <button
+          type="button"
+          class="ot-btn ot-btn-primary"
+          [disabled]="!selectedBatchId || !sumMatchesParent()"
+          (click)="onConfirm()">
+          &#10003; {{ 'refinery.btn-confirm-split' | translate }}
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- Existing sublots list -->
+  @if (sublots().length > 0) {
+    <div class="ot-card" style="margin-top:12px;">
+      <div class="ot-card-title">
+        &#128230; {{ 'refinery.existing-sublots-title' | translate }}
+        <span class="badge badge-blue" style="margin-left:auto;">{{ sublots().length }}</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>{{ 'refinery.col-sublot-id' | translate }}</th>
+            <th>{{ 'refinery.col-parent' | translate }}</th>
+            <th>{{ 'refinery.col-weight-kg' | translate }}</th>
+            <th>{{ 'refinery.col-status' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (sub of sublots(); track sub.id) {
+            <tr>
+              <td><code style="font-size:11px;">{{ sub.id }}</code></td>
+              <td><code style="font-size:11px;">{{ sub.parentBatchId }}</code></td>
+              <td>{{ sub.weightKg }}</td>
+              <td>
+                @if (sub.status === 'Completado') {
+                  <span class="badge badge-green">{{ sub.status }}</span>
+                } @else {
+                  <span class="badge badge-amber">{{ sub.status }}</span>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  } <!-- end @else isPlatinum -->
+</section>
