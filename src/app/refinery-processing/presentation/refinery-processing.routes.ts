@@ -1,9 +1,6 @@
 ﻿import { Routes } from '@angular/router';
 import { iamGuard } from '../../iam/infrastructure/iam.guard';
 
-import { Routes } from '@angular/router';
-import { iamGuard } from '../../iam/infrastructure/iam.guard';
-
 export const refineryProcessingRoutes: Routes = [
   { path: '', redirectTo: 'receive', pathMatch: 'full' },
   {
