@@ -42,6 +42,7 @@
     "@angular/cli": "^21.2.8",
     "@angular/compiler-cli": "^21.2.10",
     "@types/jasmine": "~5.1.0",
+    "angular-cli-ghpages": "^3.0.3",
     "baseline-browser-mapping": "^2.10.23",
     "jasmine-core": "~5.9.0",
     "json-server": "^0.17.4",
