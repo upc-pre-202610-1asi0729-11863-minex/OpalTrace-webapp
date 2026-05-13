@@ -1,59 +1,58 @@
 # OpalTraceWebapp
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.10.
+`opaltrace-webapp` es una aplicación cliente Angular 21 para OpalTrace by MINEX — una plataforma SaaS de trazabilidad mineral responsable que conecta la cadena productiva desde la extracción hasta la certificación de joyería, garantizando origen ético y transparencia blockchain en cada etapa.
 
-## Development server
+## Features
 
-To start a local development server, run:
+- Registro de lotes minerales con validación de zona GPS autorizada y generación de ID `OT-YYYY-NNNN`
+- Cadena de custodia con escaneo QR y actualización de ubicación en tránsito
+- Panel de alertas automáticas de anomalías (discrepancia de peso, salto de estado, demora GPS)
+- Procesamiento en refinería: recepción, división en sublotes y registro de merma
+- Inventario de joyería: recepción de material certificado OpalTrace y material externo
+- Flujo de certificación de productos de joyería con QR verificable (`CERT-YYYY-NNNN`)
+- Verificación pública de autenticidad por QR sin autenticación requerida
+- Dashboard analítico con métricas de lotes por estado y periodo (día/semana/mes/año)
+- Reporte ESG exportable (plan Platinum)
+- Certificado de Origen de lote con historial de eventos en timeline visual
+- Gestión de suscripciones y planes (Silver / Gold / Platinum) por segmento de empresa
+- Internacionalización español/inglés con `ngx-translate`
+- Arquitectura DDD por bounded context con Angular Signals y componentes standalone
+- Mock REST API con `json-server` y datos de demostración completos
 
-```bash
-ng serve
-```
+## Team
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+| Integrante | GitHub |
+| --- | --- |
+| Armestar Felipa, Adrian Andres | [@adrianAF](https://github.com/adrianAF) |
+| Baldeon Vivar, Santiago Armando | [@Santibal11](https://github.com/Santibal11) |
+| Philco Mota, Katty Yolanda | [@kattyPM](https://github.com/kattyPM) |
+| Vergaray Calderon, Rose Almendra | [@roseVC](https://github.com/roseVC) |
+| Yi Torrejon, Ethan Raul | [@ethanYT](https://github.com/ethanYT) |
 
-## Code scaffolding
+## Prerequisites
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+- Node.js 20 LTS o superior
+- npm 10+
+- Angular CLI 21
 
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+## Installation
 
 ```bash
-ng test
+npm install
 ```
 
-## Running end-to-end tests
+## Running the Application
 
-For end-to-end (e2e) testing, run:
+Iniciar el servidor de datos mock (json-server) en una terminal:
 
 ```bash
-ng e2e
+npm run server
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+Iniciar la aplicación Angular en otra terminal:
 
-## Additional Resources
+```bash
+ng serve --open
+```
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+La aplicación estará disponible en `http://localhost:4200` y la API mock en `http://localhost:3000`.

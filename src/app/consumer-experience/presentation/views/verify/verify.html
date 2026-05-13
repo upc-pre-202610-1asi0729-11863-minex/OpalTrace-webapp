@@ -1,0 +1,137 @@
+<section>
+  <h1 class="page-title"><i class="ti ti-shield-check"></i> {{ 'verify.title' | translate }}</h1>
+  <p class="page-sub">{{ 'verify.sub' | translate }}</p>
+
+  <!-- QR scanner card -->
+  <div class="ot-card" style="margin-bottom:24px;">
+    <div class="ot-card-title"><i class="ti ti-qrcode"></i> {{ 'verify.scanner-title' | translate }}</div>
+
+    @if (!cameraActive()) {
+      <div class="qr-box">
+        <i class="ti ti-camera-off" style="font-size:52px;color:#ccc;margin-bottom:12px;"></i>
+        <p style="color:#aaa;font-size:14px;margin-bottom:4px;">{{ 'verify.camera-off' | translate }}</p>
+        <p style="color:#bbb;font-size:12px;margin-bottom:16px;">{{ 'verify.camera-hint' | translate }}</p>
+        <button class="ot-btn ot-btn-primary" (click)="activateCamera()" [disabled]="cameraLoading()">
+          @if (cameraLoading()) {
+            <i class="ti ti-loader-2"></i> {{ 'verify.camera-loading' | translate }}
+          } @else {
+            <i class="ti ti-camera"></i> {{ 'verify.camera-btn' | translate }}
+          }
+        </button>
+      </div>
+      @if (cameraError()) {
+        <div class="alert-box alert-danger" style="margin-top:12px;">
+          <i class="ti ti-alert-triangle"></i> {{ cameraError() }}
+        </div>
+      }
+    } @else {
+      <div style="position:relative;width:100%;border-radius:10px;overflow:hidden;background:#000;min-height:220px;">
+        <video #videoEl style="width:100%;max-height:280px;object-fit:cover;display:block;" autoplay playsinline muted></video>
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;">
+          <div style="width:160px;height:160px;border:3px solid #FF914D;border-radius:12px;box-shadow:0 0 0 2000px rgba(0,0,0,0.35);"></div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:8px;">
+        <button class="ot-btn ot-btn-sm" (click)="stopCamera()">
+          <i class="ti ti-camera-off"></i> {{ 'verify.camera-stop' | translate }}
+        </button>
+      </div>
+    }
+
+    <!-- Manual input -->
+    <div style="margin-top:16px;">
+      <label style="font-size:12px;color:#555;display:block;margin-bottom:4px;">
+        {{ 'verify.code-label' | translate }} <span style="color:#999;">{{ 'verify.code-format' | translate }}</span>
+      </label>
+      <div style="display:flex;gap:10px;">
+        <input
+          type="text"
+          [value]="certInput()"
+          (input)="certInput.set($any($event.target).value)"
+          placeholder="CERT-2025-001"
+          style="flex:1;padding:8px 12px;border:1px solid #ddd;border-radius:6px;font-size:14px;"
+        />
+        <button
+          class="ot-btn ot-btn-primary"
+          (click)="verify()"
+          [disabled]="loading() || !certInput().trim()">
+          @if (loading()) {
+            <i class="ti ti-loader-2"></i> {{ 'verify.verifying' | translate }}
+          } @else {
+            <i class="ti ti-search"></i> {{ 'verify.btn' | translate }}
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Result -->
+  @if (result()) {
+    @if (result()!.authentic) {
+      <div class="verify-result">
+        <div class="verify-ok">
+          <div class="verify-icon"><i class="ti ti-shield-check"></i></div>
+          <div class="verify-title">{{ 'verify.authentic-title' | translate }}</div>
+          <div class="verify-sub">
+            <strong>{{ result()!.cert!.certId }}</strong> &mdash; {{ result()!.cert!.productName }}
+          </div>
+        </div>
+      </div>
+
+      @if (eventLogged()) {
+        <div style="text-align:center;font-size:12px;color:#3F816C;margin:8px 0 16px;">
+          <i class="ti ti-check-circle"></i> Evento <strong>AuthenticityVerified</strong> registrado
+        </div>
+      }
+
+      <!-- Traceability timeline -->
+      <div class="ot-card" style="margin-top:16px;">
+        <div class="ot-card-title"><i class="ti ti-timeline"></i> {{ 'verify.traceability' | translate }}</div>
+        <ul class="timeline">
+          @for (event of result()!.cert!.events; track event.timestamp) {
+            <li class="timeline-item">
+              <div class="tl-dot green"><i class="ti ti-circle-check" style="font-size:13px;"></i></div>
+              <div class="tl-body">
+                <div class="tl-title">{{ event.type }}</div>
+                <div class="tl-meta">
+                  <i class="ti ti-calendar" style="font-size:11px;"></i>
+                  {{ event.timestamp | date:'dd/MM/yyyy HH:mm' }}
+                  &nbsp;·&nbsp;
+                  <i class="ti ti-building"></i> {{ event.actor }}
+                </div>
+                @if (event.txHash) {
+                  <div style="margin-top:4px;">
+                    <code style="font-size:10px;color:#aaa;">{{ event.txHash }}</code>
+                  </div>
+                }
+              </div>
+            </li>
+          }
+        </ul>
+      </div>
+
+      <div style="display:flex;gap:12px;margin-top:16px;">
+        <a [routerLink]="['/verify', result()!.cert!.certId, 'map']" class="ot-btn ot-btn-primary">
+          <i class="ti ti-map"></i> {{ 'verify.map-btn' | translate }}
+        </a>
+        <button class="ot-btn" (click)="reset()">
+          <i class="ti ti-refresh"></i> {{ 'verify.new-btn' | translate }}
+        </button>
+      </div>
+    } @else {
+      <div class="verify-result">
+        <div class="verify-fail">
+          <div class="verify-icon"><i class="ti ti-shield-x"></i></div>
+          <div class="verify-title">{{ 'verify.fail-title' | translate }}</div>
+          <div class="verify-sub">{{ result()!.error }}</div>
+        </div>
+      </div>
+
+      <div style="text-align:center;margin-top:16px;">
+        <button class="ot-btn" (click)="reset()">
+          <i class="ti ti-refresh"></i> {{ 'verify.retry-btn' | translate }}
+        </button>
+      </div>
+    }
+  }
+</section>

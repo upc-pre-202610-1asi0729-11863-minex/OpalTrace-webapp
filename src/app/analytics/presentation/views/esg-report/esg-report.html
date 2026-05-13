@@ -1,0 +1,137 @@
+<section>
+  <h1 class="page-title">{{ 'esg.title' | translate }}</h1>
+  <p class="page-sub">{{ 'esg.sub' | translate }}</p>
+
+  @if (!isPlatinum()) {
+    <!-- Upgrade wall -->
+    <div class="upgrade-wall">
+      <div class="upgrade-icon"><i class="ti ti-crown"></i></div>
+      <div class="upgrade-title">{{ 'esg.upgrade-title' | translate }}</div>
+      <div class="upgrade-sub">{{ 'esg.upgrade-sub' | translate }}</div>
+      <div style="margin-top:20px;display:flex;gap:12px;justify-content:center;">
+        <a href="/subscriptions" class="ot-btn ot-btn-primary">
+          <i class="ti ti-arrow-up-circle"></i> {{ 'esg.btn-upgrade' | translate }}
+        </a>
+        <a href="/analytics/dashboard" class="ot-btn">
+          <i class="ti ti-chart-bar"></i> {{ 'esg.btn-analytics' | translate }}
+        </a>
+      </div>
+    </div>
+  } @else {
+
+    <!-- MINING PLATINUM -->
+    @if (isMining()) {
+      <div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
+        <button class="ot-btn ot-btn-primary" (click)="exportPdf()">
+          <i class="ti ti-file-type-pdf"></i> {{ 'esg.btn-export' | translate }}
+        </button>
+      </div>
+
+      <div class="metrics-grid">
+        <div class="metric-card success">
+          <div class="metric-val">{{ esg().mining?.co2Avoided }}</div>
+          <div class="metric-lbl">{{ 'esg.co2-avoided' | translate }}</div>
+        </div>
+        <div class="metric-card info">
+          <div class="metric-val">{{ esg().mining?.ethicalCompliance }}</div>
+          <div class="metric-lbl">{{ 'esg.ethical-compliance' | translate }}</div>
+        </div>
+        <div class="metric-card success">
+          <div class="metric-val">{{ esg().mining?.gpsVerifiedBatches }}</div>
+          <div class="metric-lbl">{{ 'esg.gps-verified' | translate }}</div>
+        </div>
+      </div>
+
+      <div class="ot-card" style="margin-top:24px;">
+        <div class="ot-card-title"><i class="ti ti-leaf"></i> {{ 'esg.mining-indicators-title' | translate }}</div>
+        <div style="display:flex;flex-direction:column;gap:16px;padding:8px 0;">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:#f0faf5;border-radius:8px;">
+            <div>
+              <i class="ti ti-cloud" style="color:#3F816C;"></i>
+              <strong style="margin-left:8px;">{{ 'esg.co2-period' | translate }}</strong>
+              <p style="font-size:12px;color:#555;margin:2px 0 0 24px;">{{ 'esg.co2-detail' | translate }}</p>
+            </div>
+            <span style="font-size:20px;font-weight:700;color:#3F816C;">{{ esg().mining?.co2Avoided }}</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:#f0f8ff;border-radius:8px;">
+            <div>
+              <i class="ti ti-shield-check" style="color:#1d72b8;"></i>
+              <strong style="margin-left:8px;">{{ 'esg.ethical-pct' | translate }}</strong>
+              <p style="font-size:12px;color:#555;margin:2px 0 0 24px;">{{ 'esg.ethical-detail' | translate }}</p>
+            </div>
+            <span style="font-size:20px;font-weight:700;color:#1d72b8;">{{ esg().mining?.ethicalCompliance }}</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:#fffbf0;border-radius:8px;">
+            <div>
+              <i class="ti ti-map-pin" style="color:#e8a020;"></i>
+              <strong style="margin-left:8px;">{{ 'esg.gps-batches' | translate }}</strong>
+              <p style="font-size:12px;color:#555;margin:2px 0 0 24px;">{{ 'esg.gps-detail' | translate }}</p>
+            </div>
+            <span style="font-size:20px;font-weight:700;color:#e8a020;">{{ esg().mining?.gpsVerifiedBatches }}</span>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- JEWELRY PLATINUM -->
+    @if (isJewelry()) {
+      <div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
+        <button class="ot-btn ot-btn-primary" (click)="exportPdf()">
+          <i class="ti ti-file-type-pdf"></i> {{ 'esg.btn-export' | translate }}
+        </button>
+      </div>
+
+      <div class="metrics-grid">
+        <div class="metric-card success">
+          <div class="metric-val">{{ esg().jewelry?.ethicalOriginJewels }}</div>
+          <div class="metric-lbl">{{ 'esg.ethical-jewels' | translate }}</div>
+        </div>
+        <div class="metric-card danger">
+          <div class="metric-val">{{ esg().jewelry?.revokedCerts }}</div>
+          <div class="metric-lbl">{{ 'esg.revoked-certs' | translate }}</div>
+        </div>
+        <div class="metric-card info">
+          <div class="metric-val">{{ esg().jewelry?.consumerVerifications }}</div>
+          <div class="metric-lbl">{{ 'esg.consumer-verif' | translate }}</div>
+        </div>
+      </div>
+
+      <div class="ot-card" style="margin-top:24px;">
+        <div class="ot-card-title"><i class="ti ti-diamond"></i> {{ 'esg.jewelry-indicators-title' | translate }}</div>
+        <div style="display:flex;flex-direction:column;gap:16px;padding:8px 0;">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:#f0faf5;border-radius:8px;">
+            <div>
+              <i class="ti ti-diamond" style="color:#3F816C;"></i>
+              <strong style="margin-left:8px;">{{ 'esg.ethical-jewels' | translate }}</strong>
+              <p style="font-size:12px;color:#555;margin:2px 0 0 24px;">{{ 'esg.ethical-jewels-detail' | translate }}</p>
+            </div>
+            <span style="font-size:20px;font-weight:700;color:#3F816C;">{{ esg().jewelry?.ethicalOriginJewels }}</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:#fff5f5;border-radius:8px;">
+            <div>
+              <i class="ti ti-certificate-off" style="color:#dc2626;"></i>
+              <strong style="margin-left:8px;">{{ 'esg.revoked-certs' | translate }}</strong>
+              <p style="font-size:12px;color:#555;margin:2px 0 0 24px;">{{ 'esg.revoked-detail' | translate }}</p>
+            </div>
+            <span style="font-size:20px;font-weight:700;color:#dc2626;">{{ esg().jewelry?.revokedCerts }}</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:#f0f8ff;border-radius:8px;">
+            <div>
+              <i class="ti ti-users" style="color:#1d72b8;"></i>
+              <strong style="margin-left:8px;">{{ 'esg.consumer-verif' | translate }}</strong>
+              <p style="font-size:12px;color:#555;margin:2px 0 0 24px;">{{ 'esg.consumer-verif-detail' | translate }}</p>
+            </div>
+            <span style="font-size:20px;font-weight:700;color:#1d72b8;">{{ esg().jewelry?.consumerVerifications }}</span>
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (!isMining() && !isJewelry()) {
+      <div class="alert-box alert-warning">
+        <i class="ti ti-alert-triangle"></i>
+        {{ 'esg.no-segment' | translate }}
+      </div>
+    }
+  }
+</section>

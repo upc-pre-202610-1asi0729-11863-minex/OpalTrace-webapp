@@ -1,0 +1,78 @@
+<section>
+  <h1 class="page-title">{{ 'analytics.title' | translate }}</h1>
+  <p class="page-sub">{{ 'analytics.sub' | translate }}</p>
+
+  <!-- Period filter -->
+  <div style="display:flex;gap:8px;margin-bottom:24px;align-items:center;">
+    <span style="font-size:12px;color:#666;margin-right:4px;">{{ 'analytics.period' | translate }}:</span>
+    @for (p of periods; track p) {
+      <button class="ot-btn"
+              [class.ot-btn-primary]="selectedPeriod() === p"
+              (click)="selectedPeriod.set(p)">
+        {{ periodKey(p) | translate }}
+      </button>
+    }
+  </div>
+
+  <!-- Metric cards -->
+  <div class="metrics-grid" aria-live="polite" aria-label="Métricas analíticas">
+    <div class="metric-card info">
+      <div class="metric-val">{{ metrics().totalBatches }}</div>
+      <div class="metric-lbl">{{ 'analytics.total-batches' | translate }}</div>
+    </div>
+    <div class="metric-card warn">
+      <div class="metric-val">{{ metrics().inTransit }}</div>
+      <div class="metric-lbl">{{ 'analytics.in-transit' | translate }}</div>
+    </div>
+    <div class="metric-card danger">
+      <div class="metric-val">{{ metrics().activeAnomalies }}</div>
+      <div class="metric-lbl">{{ 'analytics.anomalies' | translate }}</div>
+    </div>
+    <div class="metric-card info">
+      <div class="metric-val">{{ metrics().avgTimePerStage }}</div>
+      <div class="metric-lbl">{{ 'analytics.avg-time' | translate }}</div>
+    </div>
+  </div>
+
+  <!-- Secondary metrics row -->
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;">
+    <div class="ot-card" style="text-align:center;">
+      <div style="font-size:22px;font-weight:700;color:#3F816C;">{{ metrics().certified }}</div>
+      <div style="font-size:12px;color:#555;">{{ 'analytics.certified' | translate }}</div>
+    </div>
+    <div class="ot-card" style="text-align:center;">
+      <div style="font-size:22px;font-weight:700;color:#3F816C;">{{ metrics().certRate }}</div>
+      <div style="font-size:12px;color:#555;">{{ 'analytics.cert-rate' | translate }}</div>
+    </div>
+    <div class="ot-card" style="text-align:center;">
+      <div style="font-size:22px;font-weight:700;color:#e8a020;">{{ metrics().avgShrinkage }}</div>
+      <div style="font-size:12px;color:#555;">{{ 'analytics.avg-shrinkage' | translate }}</div>
+    </div>
+    <div class="ot-card" style="text-align:center;">
+      <div style="font-size:22px;font-weight:700;color:#666;">{{ metrics().totalCycleTime }}</div>
+      <div style="font-size:12px;color:#555;">{{ 'analytics.cycle-time' | translate }}</div>
+    </div>
+  </div>
+
+  <!-- Chart: certified batches per day -->
+  <div class="ot-card">
+    <div class="ot-card-title">
+      <i class="ti ti-chart-bar"></i>
+      {{ chartTitle() | translate }}
+    </div>
+
+    <div class="chart-bars" aria-label="Gráfica de lotes certificados">
+      @for (item of computedChartData(); track item.day) {
+        <div class="bar" [style.height]="barHeightPct(item.count)"
+             style="background:#3F816C;"
+             [title]="item.count + ' lotes'">
+        </div>
+      }
+    </div>
+    <div class="chart-labels">
+      @for (item of computedChartData(); track item.day) {
+        <span class="chart-lbl">{{ item.day }}</span>
+      }
+    </div>
+  </div>
+</section>

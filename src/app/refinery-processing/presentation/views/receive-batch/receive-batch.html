@@ -1,0 +1,174 @@
+<section class="receive-batch-page">
+  <h1 class="page-title">{{ 'refinery.receive-title' | translate }}</h1>
+  <p class="page-sub">{{ 'refinery.receive-sub' | translate }}</p>
+
+  <!-- Upgrade wall for non-PLATINUM -->
+  @if (!isPlatinum()) {
+    <div class="upgrade-wall">
+      <div class="upgrade-icon">&#128274;</div>
+      <div class="upgrade-title">{{ 'refinery.upgrade-title' | translate }}</div>
+      <div class="upgrade-sub">{{ 'refinery.upgrade-receive-sub' | translate }}</div>
+      <a href="/subscriptions" class="ot-btn ot-btn-primary" style="margin-top:16px;">
+        &#11014; {{ 'refinery.upgrade-btn' | translate }}
+      </a>
+    </div>
+  } @else {
+
+  <!-- Weight threshold info -->
+  <div class="alert-box alert-warning" role="note" style="margin-bottom:16px;">
+    <strong>&#9888; {{ 'refinery.threshold-label' | translate }}</strong>
+    {{ 'refinery.threshold-detail' | translate }}
+  </div>
+
+  <!-- Success result -->
+  @if (result()?.success) {
+    <div class="alert-box alert-success" role="status">
+      <strong>&#10003; {{ 'refinery.success-receive' | translate }}</strong>
+      {{ 'refinery.success-receive-detail' | translate }}
+    </div>
+    <div style="display:flex;gap:10px;margin-bottom:16px;">
+      <button type="button" class="ot-btn ot-btn-primary" (click)="onReset()">
+        &#43; {{ 'refinery.btn-receive-another' | translate }}
+      </button>
+    </div>
+  }
+
+  <!-- Error / discrepancy result -->
+  @if (result() && !result()!.success) {
+    @if (result()!.alert) {
+      <div class="alert-box alert-danger" role="alert">
+        <strong>&#9888; {{ 'refinery.discrepancy-title' | translate }}</strong><br>
+        <strong>{{ 'common.id' | translate }}:</strong> <code>{{ result()!.alert!.batchId }}</code><br>
+        <strong>{{ 'refinery.expected-label' | translate }}</strong> {{ result()!.alert!.expectedKg }} kg<br>
+        <strong>{{ 'refinery.received-label' | translate }}</strong> {{ result()!.alert!.receivedKg }} kg<br>
+        <strong>{{ 'refinery.diff-label' | translate }}</strong>
+        <span style="color:#c0392b;font-weight:700;">{{ result()!.alert!.diffPercent }}%</span>
+        {{ 'refinery.diff-limit' | translate }}<br>
+        <span style="font-size:12px;margin-top:4px;display:block;">
+          {{ 'refinery.discrepancy-note' | translate }}
+        </span>
+      </div>
+    } @else {
+      <div class="alert-box alert-danger" role="alert">
+        <strong>&#10005; Error:</strong> {{ result()!.error }}
+      </div>
+    }
+  }
+
+  <!-- Reception form -->
+  @if (!submitted()) {
+    <div class="ot-card">
+      <div class="ot-card-title">&#128230; {{ 'refinery.form-receive-title' | translate }}</div>
+
+      <form #receiveForm="ngForm" (ngSubmit)="onSubmit()">
+
+        <!-- Batch selector -->
+        <div class="form-group">
+          <label class="form-label" for="batchSelect">{{ 'refinery.batch-select-label' | translate }}</label>
+          @if (eligibleBatches().length > 0) {
+            <select id="batchSelect" name="batchId" [(ngModel)]="batchId" required>
+              <option value="" disabled>{{ 'refinery.batch-transit-placeholder' | translate }}</option>
+              @for (b of eligibleBatches(); track b.id) {
+                <option [value]="b.id">
+                  {{ b.id }} · {{ b.mineral }} · {{ b.weightKg }} kg
+                </option>
+              }
+            </select>
+          } @else {
+            <input
+              id="batchSelect"
+              type="text"
+              name="batchId"
+              [(ngModel)]="batchId"
+              [placeholder]="'refinery.batch-manual-placeholder' | translate"
+              required />
+            <span style="font-size:11px;color:#888;">
+              {{ 'refinery.no-transit' | translate }}
+            </span>
+          }
+        </div>
+
+        <!-- Source batch info -->
+        @if (selectedSource()) {
+          <div style="background:#f9f9f7;border:1px solid #e8e8e4;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#555;">
+            <strong>{{ 'refinery.origin-weight' | translate }}</strong> {{ selectedSource()!.weightKg }} kg ·
+            <strong>{{ 'refinery.origin-mineral' | translate }}</strong> {{ selectedSource()!.mineral }} ·
+            <strong>{{ 'refinery.origin-status' | translate }}</strong>
+            <span class="badge badge-blue">{{ selectedSource()!.status }}</span>
+          </div>
+        }
+
+        <!-- Weight received -->
+        <div class="form-group">
+          <label class="form-label" for="weight">{{ 'refinery.received-weight-label' | translate }}</label>
+          <input
+            id="weight"
+            type="number"
+            name="weight"
+            [(ngModel)]="receivedWeightKg"
+            min="0.1"
+            step="0.1"
+            placeholder="Ej: 445"
+            required />
+          <span style="font-size:11px;color:#888;">
+            {{ 'refinery.received-weight-hint' | translate }}
+          </span>
+        </div>
+
+        <!-- Location -->
+        <div class="form-group">
+          <label class="form-label" for="location">{{ 'refinery.location-label' | translate }}</label>
+          <input
+            id="location"
+            type="text"
+            name="location"
+            [(ngModel)]="location"
+            placeholder="Refinería Sur – Arequipa" />
+        </div>
+
+        <button type="submit" class="ot-btn ot-btn-primary">
+          &#10003; {{ 'refinery.btn-register-receive' | translate }}
+        </button>
+      </form>
+    </div>
+  }
+
+  <!-- History -->
+  @if (refineryBatches().length > 0) {
+    <div class="ot-card" style="margin-top:12px;">
+      <div class="ot-card-title">&#128203; {{ 'refinery.history-receive-title' | translate }}</div>
+      <table>
+        <thead>
+          <tr>
+            <th>{{ 'refinery.col-batch-id' | translate }}</th>
+            <th>{{ 'refinery.col-mineral' | translate }}</th>
+            <th>{{ 'refinery.col-weight-kg' | translate }}</th>
+            <th>{{ 'refinery.col-status' | translate }}</th>
+            <th>{{ 'refinery.col-location' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (b of refineryBatches(); track b.batchId) {
+            <tr>
+              <td><code style="font-size:11px;">{{ b.batchId }}</code></td>
+              <td>{{ b.mineral ?? '—' }}</td>
+              <td>{{ b.weightKg }}</td>
+              <td>
+                @if (b.status === 'Completado') {
+                  <span class="badge badge-green">{{ b.status }}</span>
+                } @else if (b.status === 'En Proceso') {
+                  <span class="badge badge-blue">{{ b.status }}</span>
+                } @else {
+                  <span class="badge badge-amber">{{ b.status }}</span>
+                }
+              </td>
+              <td style="font-size:12px;">{{ b.location }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  } <!-- end @else isPlatinum -->
+</section>

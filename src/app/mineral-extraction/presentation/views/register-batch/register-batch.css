@@ -1,0 +1,15 @@
+/* Register-batch view styles */
+.register-page {
+  padding: 20px;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+code {
+  font-family: 'Courier New', monospace;
+  background: #f5f5f3;
+  padding: 2px 5px;
+  border-radius: 3px;
+  color: #333;
+  font-size: 12px;
+}

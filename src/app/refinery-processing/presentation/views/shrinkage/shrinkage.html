@@ -1,0 +1,169 @@
+<section class="shrinkage-page">
+  <h1 class="page-title">{{ 'refinery.shrinkage-title' | translate }}</h1>
+  <p class="page-sub">{{ 'refinery.shrinkage-sub' | translate }}</p>
+
+  <!-- Upgrade wall for non-PLATINUM -->
+  @if (!isPlatinum()) {
+    <div class="upgrade-wall">
+      <div class="upgrade-icon">&#128274;</div>
+      <div class="upgrade-title">{{ 'refinery.upgrade-title' | translate }}</div>
+      <div class="upgrade-sub">{{ 'refinery.upgrade-shrinkage-sub' | translate }}</div>
+      <a href="/subscriptions" class="ot-btn ot-btn-primary" style="margin-top:16px;">
+        &#11014; {{ 'refinery.upgrade-btn' | translate }}
+      </a>
+    </div>
+  } @else {
+
+  <!-- Efficiency targets reference -->
+  <div class="ot-card" style="margin-bottom:12px;">
+    <div class="ot-card-title">&#127919; {{ 'refinery.targets-title' | translate }}</div>
+    <div class="metrics-grid" style="--cols:4;">
+      @for (entry of allTargets; track entry[0]) {
+        <div class="metric-card info" style="text-align:center;">
+          <div class="metric-val" style="font-size:18px;">≤ {{ entry[1] }}%</div>
+          <div class="metric-lbl">{{ entry[0] }}</div>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Success result -->
+  @if (result()?.success) {
+    <div class="alert-box alert-success" role="status">
+      <strong>&#10003; {{ 'refinery.success-shrinkage' | translate }}</strong>
+      {{ 'refinery.success-shrinkage-for' | translate }}
+      <code>{{ selectedBatchId }}</code>.
+    </div>
+    <button type="button" class="ot-btn" (click)="onReset()" style="margin-bottom:16px;">
+      &#43; {{ 'refinery.btn-another-shrinkage' | translate }}
+    </button>
+  }
+
+  <!-- Error result -->
+  @if (result() && !result()!.success) {
+    <div class="alert-box alert-danger" role="alert">
+      <strong>&#10005; Error:</strong> {{ result()!.error }}
+    </div>
+  }
+
+  <!-- Shrinkage form -->
+  @if (!submitted()) {
+    <div class="ot-card">
+      <div class="ot-card-title">&#128202; {{ 'refinery.form-shrinkage-title' | translate }}</div>
+
+      <form #shrinkageForm="ngForm" (ngSubmit)="onSubmit()">
+
+        <!-- Batch selector -->
+        <div class="form-group">
+          <label class="form-label" for="batchId">{{ 'refinery.batch-label' | translate }}</label>
+          @if (availableBatches().length === 0) {
+            <p style="font-size:13px;color:#888;">
+              {{ 'refinery.no-batches-shrinkage' | translate }}
+            </p>
+          } @else {
+            <select id="batchId" name="batchId" [(ngModel)]="selectedBatchId" required>
+              @for (b of availableBatches(); track b.batchId) {
+                <option [value]="b.batchId">
+                  {{ b.batchId }} · {{ b.mineral ?? 'Mineral' }} · {{ b.weightKg }} kg
+                </option>
+              }
+            </select>
+          }
+        </div>
+
+        <!-- Selected batch info -->
+        @if (selectedBatch()) {
+          <div style="background:#f9f9f7;border:1px solid #e8e8e4;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#555;">
+            <strong>{{ 'refinery.mineral-info' | translate }}</strong> {{ selectedBatch()!.mineral ?? '—' }} ·
+            <strong>{{ 'refinery.weight-received' | translate }}</strong> {{ selectedBatch()!.weightKg }} kg ·
+            @if (targetPercent() !== null) {
+              <strong>{{ 'refinery.target-label' | translate }}</strong> ≤ {{ targetPercent() }}%
+            }
+          </div>
+        }
+
+        <!-- Percentage input -->
+        <div class="form-group">
+          <label class="form-label" for="percentage">{{ 'refinery.pct-label' | translate }}</label>
+          <input
+            id="percentage"
+            type="number"
+            name="percentage"
+            [(ngModel)]="percentage"
+            min="0"
+            max="100"
+            step="0.1"
+            placeholder="Ej: 2.5"
+            required />
+
+          <!-- Efficiency indicator -->
+          @if (percentage !== null && targetPercent() !== null) {
+            <div style="margin-top:8px;padding:8px 12px;border-radius:6px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;"
+              [style.background]="isWithinTarget() ? '#f0f9f0' : '#fff0f0'"
+              [style.border]="isWithinTarget() ? '1px solid #4caf50' : '1px solid #e74c3c'"
+              [style.color]="isWithinTarget() ? '#27500A' : '#c0392b'">
+              @if (isWithinTarget()) {
+                <span>&#10003;</span>
+                <span>{{ 'refinery.within-target' | translate }} (≤ {{ targetPercent() }}%)</span>
+              } @else {
+                <span>&#9888;</span>
+                <span>{{ 'refinery.exceeds-target' | translate }} ({{ 'refinery.limit' | translate }}: {{ targetPercent() }}%)</span>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Shrinkage type -->
+        <div class="form-group">
+          <label class="form-label" for="shrinkageType">{{ 'refinery.shrinkage-type-label' | translate }}</label>
+          <select id="shrinkageType" name="shrinkageType" [(ngModel)]="shrinkageType" required>
+            @for (type of shrinkageTypes; track type) {
+              <option [value]="type">{{ type }}</option>
+            }
+          </select>
+        </div>
+
+        <button type="submit" class="ot-btn ot-btn-primary" [disabled]="availableBatches().length === 0">
+          &#128202; {{ 'refinery.btn-register-shrinkage' | translate }}
+        </button>
+      </form>
+    </div>
+  }
+
+  <!-- Shrinkage history for selected batch -->
+  @if (batchShrinkageHistory().length > 0) {
+    <div class="ot-card" style="margin-top:12px;">
+      <div class="ot-card-title">
+        &#128203; {{ 'refinery.history-shrinkage-title' | translate }} — <code>{{ selectedBatchId }}</code>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>{{ 'refinery.col-type' | translate }}</th>
+            <th>{{ 'refinery.col-pct' | translate }}</th>
+            <th>{{ 'refinery.col-efficiency' | translate }}</th>
+            <th>{{ 'refinery.col-date' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (rec of batchShrinkageHistory(); track rec.timestamp) {
+            <tr>
+              <td>{{ rec.type }}</td>
+              <td>{{ rec.percentage }}%</td>
+              <td>
+                @if (checkWithinTarget(rec.batchId, rec.percentage)) {
+                  <span class="badge badge-green">{{ 'refinery.within-target-badge' | translate }}</span>
+                } @else {
+                  <span class="badge badge-red">{{ 'refinery.exceeds-target-badge' | translate }}</span>
+                }
+              </td>
+              <td style="font-size:12px;">{{ formatDate(rec.timestamp) }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  } <!-- end @else isPlatinum -->
+</section>

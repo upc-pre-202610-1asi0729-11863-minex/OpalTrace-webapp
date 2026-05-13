@@ -1,0 +1,163 @@
+<section>
+  <h1 class="page-title">{{ 'certify.title' | translate }}</h1>
+  <p class="page-sub">{{ 'certify.sub' | translate }}</p>
+
+  <!-- Result: QR + cert details -->
+  @if (certifyResult() && certifyResult()!.success) {
+    <div class="ot-card" style="text-align:center;margin-bottom:24px;">
+      <div class="ot-card-title" style="justify-content:center;">
+        <i class="ti ti-award"></i> {{ 'certify.result-title' | translate }}
+      </div>
+      <div style="margin:16px auto 12px;display:flex;justify-content:center;">
+        <img
+          [src]="qrImageUrl(certifyResult()!.certId!)"
+          alt="QR Certificado"
+          width="200"
+          height="200"
+          style="border-radius:8px;border:1px solid #e0e0e0;" />
+      </div>
+      <div style="margin-bottom:16px;">
+        <p style="font-size:18px;font-weight:700;color:#3F816C;margin:0 0 8px;">{{ certifyResult()!.productName }}</p>
+        <p style="font-size:13px;color:#555;margin:0 0 4px;">
+          <strong>{{ 'certify.cert-code-label' | translate }}:</strong>
+          <code style="margin-left:6px;font-size:13px;">{{ certifyResult()!.certId }}</code>
+        </p>
+        <p style="font-size:12px;color:#888;margin:0;">ID: {{ certifyResult()!.productId }}</p>
+      </div>
+      <button class="ot-btn ot-btn-primary" (click)="reset()">
+        <i class="ti ti-plus"></i> {{ 'certify.select-title' | translate }}
+      </button>
+    </div>
+  }
+
+  <!-- Form -->
+  @if (!certifyResult() || !certifyResult()!.success) {
+    <div class="ot-card" style="margin-bottom:24px;">
+      <div class="ot-card-title"><i class="ti ti-award"></i> {{ 'certify.form-title' | translate }}</div>
+
+      @if (receivedBatches().length === 0) {
+        <div class="alert-box alert-info">{{ 'certify.no-received-batches' | translate }}</div>
+      } @else {
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+
+          <!-- Source batch — shown first; auto-populates material -->
+          <div style="grid-column:1/-1;">
+            <label style="font-size:12px;color:#555;display:block;margin-bottom:4px;">{{ 'certify.source-batch-label' | translate }}</label>
+            <select
+              [value]="sourceBatchId()"
+              (change)="onBatchSelect($any($event.target).value)"
+              style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:6px;font-size:14px;">
+              <option value="">{{ 'certify.source-batch-placeholder' | translate }}</option>
+              @for (b of receivedBatches(); track b.id) {
+                <option [value]="b.batchId">{{ b.batchId }} · {{ b.weightG }} g</option>
+              }
+            </select>
+            <!-- Auto-populated mineral badge -->
+            @if (batchMineralLoading()) {
+              <span style="font-size:11px;color:#888;display:inline-block;margin-top:6px;">
+                <i class="ti ti-loader-2"></i> Cargando...
+              </span>
+            } @else if (batchMineral()) {
+              <span class="badge badge-amber" style="margin-top:6px;display:inline-flex;">
+                <i class="ti ti-gem"></i>&nbsp;{{ 'certify.material-label' | translate }}: {{ 'mineral.' + batchMineral() | translate }}
+              </span>
+            }
+          </div>
+
+          <!-- Product name -->
+          <div style="grid-column:1/-1;">
+            <label style="font-size:12px;color:#555;display:block;margin-bottom:4px;">{{ 'certify.product-name-label' | translate }}</label>
+            <input
+              type="text"
+              [value]="productName()"
+              (input)="productName.set($any($event.target).value)"
+              [placeholder]="'certify.product-name-placeholder' | translate"
+              style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:6px;font-size:14px;box-sizing:border-box;" />
+          </div>
+
+          <!-- Product type -->
+          <div>
+            <label style="font-size:12px;color:#555;display:block;margin-bottom:4px;">{{ 'certify.product-type-label' | translate }}</label>
+            <select
+              [value]="productType()"
+              (change)="productType.set($any($event.target).value)"
+              style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:6px;font-size:14px;">
+              <option value="">{{ 'certify.product-type-placeholder' | translate }}</option>
+              @for (t of productTypes; track t) {
+                <option [value]="t">{{ 'certify.type-' + t.toLowerCase() | translate }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Weight -->
+          <div>
+            <label style="font-size:12px;color:#555;display:block;margin-bottom:4px;">{{ 'certify.weight-label' | translate }}</label>
+            <input
+              type="number"
+              [value]="weightG()"
+              (input)="weightG.set($any($event.target).value)"
+              [placeholder]="'certify.weight-placeholder' | translate"
+              min="0.1"
+              style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:6px;font-size:14px;box-sizing:border-box;" />
+          </div>
+        </div>
+
+        <!-- Error -->
+        @if (certifyResult() && !certifyResult()!.success) {
+          <div class="alert-box alert-danger" style="margin-bottom:12px;">
+            <i class="ti ti-circle-x"></i> {{ certifyResult()!.error }}
+          </div>
+        }
+
+        <button
+          class="ot-btn ot-btn-primary"
+          [disabled]="!isFormValid()"
+          (click)="certify()">
+          <i class="ti ti-award"></i> {{ 'certify.btn-create-certify' | translate }}
+        </button>
+      }
+    </div>
+  }
+
+  <!-- Certificates table -->
+  <div class="ot-card">
+    <div class="ot-card-title"><i class="ti ti-list-check"></i> {{ 'certify.list-title' | translate }}</div>
+
+    @if (certificates().length === 0) {
+      <p style="color:#999;text-align:center;padding:20px 0;">{{ 'certify.empty' | translate }}</p>
+    } @else {
+      <table>
+        <thead>
+          <tr>
+            <th>{{ 'certify.col-id' | translate }}</th>
+            <th>{{ 'certify.col-product' | translate }}</th>
+            <th>{{ 'certify.col-date' | translate }}</th>
+            <th>{{ 'certify.col-status' | translate }}</th>
+            <th>{{ 'certify.col-download' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (cert of certificates(); track cert.certId) {
+            <tr>
+              <td><code style="font-size:11px;">{{ cert.certId }}</code></td>
+              <td>{{ cert.productName }}</td>
+              <td style="font-size:12px;">{{ cert.issuedAt | date:'dd/MM/yyyy HH:mm' }}</td>
+              <td>
+                @if (cert.certState === 'CERTIFIED') {
+                  <span class="badge badge-green"><i class="ti ti-check"></i> {{ 'common.certified' | translate }}</span>
+                } @else {
+                  <span class="badge badge-red">{{ 'certify.revoked' | translate }}</span>
+                }
+              </td>
+              <td>
+                <button class="ot-btn ot-btn-sm" [title]="'certify.download-pdf' | translate">
+                  <i class="ti ti-download"></i> PDF
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+</section>
