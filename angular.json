@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "learning-center": {
+    "opaltrace": {
       "projectType": "application",
       "schematics": {},
       "root": "",
@@ -68,10 +68,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "learning-center:build:production"
+              "buildTarget": "opaltrace:build:production"
             },
             "development": {
-              "buildTarget": "learning-center:build:development"
+              "buildTarget": "opaltrace:build:development"
             }
           },
           "defaultConfiguration": "development"
