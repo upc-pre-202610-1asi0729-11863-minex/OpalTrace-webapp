@@ -7,7 +7,8 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "server": "json-server --watch server/db.json --routes server/routes.json --port 3000"
+    "server": "json-server --watch server/db.json --routes server/routes.json --port 3000",
+    "deploy": "ng build --base-href /OpalTrace-webapp/ && npx angular-cli-ghpages --dir=dist/opaltrace/browser"
   },
   "prettier": {
     "printWidth": 100,
