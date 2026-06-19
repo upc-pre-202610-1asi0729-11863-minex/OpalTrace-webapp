@@ -21,10 +21,10 @@ export class JewelryProductsApiEndpoint extends BaseApiEndpoint<
     );
   }
 
-  getByUserId(userId: number): Observable<JewelryProduct[]> {
-    return this.http.get<JewelryProductResource[]>(`${this.endpointUrl}?userId=${userId}`).pipe(
+  getByUserId(_userId: number): Observable<JewelryProduct[]> {
+    return this.http.get<JewelryProductResource[]>(this.endpointUrl).pipe(
       map(resources => resources.map(r => this.assembler.toEntityFromResource(r))),
-      catchError(this.handleError('Failed to fetch jewelry products by userId'))
+      catchError(this.handleError('Failed to fetch jewelry products'))
     );
   }
 }

@@ -1,4 +1,4 @@
-﻿import { Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { BaseApi } from '../../shared/infrastructure/base-api';
@@ -22,7 +22,7 @@ export class ConsumerApi extends BaseApi {
     return this.certificatesEndpoint.getAll();
   }
 
-  createVerificationEvent(event: VerificationEvent): Observable<VerificationEvent> {
-    return this.verificationEventsEndpoint.create(event);
+  verify(certificateId: string, event: VerificationEvent): Observable<VerificationEvent> {
+    return this.verificationEventsEndpoint.verify(certificateId, event);
   }
 }

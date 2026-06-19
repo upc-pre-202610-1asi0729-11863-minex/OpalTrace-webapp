@@ -205,7 +205,7 @@ export class ConsumerStore {
       result,
     });
 
-    this.api.createVerificationEvent(event).pipe(retry(2)).subscribe({
+    this.api.verify(certId, event).pipe(retry(2)).subscribe({
       next: () => this.verificationLogSignal.update(log => [entry, ...log]),
       error: () => this.verificationLogSignal.update(log => [entry, ...log]),
     });

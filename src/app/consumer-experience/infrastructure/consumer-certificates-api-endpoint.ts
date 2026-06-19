@@ -14,7 +14,7 @@ export class ConsumerCertificatesApiEndpoint extends BaseApiEndpoint<
   constructor(http: HttpClient) {
     super(
       http,
-      `${environment.platformProviderApiBaseUrl}${environment.platformProviderCertificatesEndpointPath}`,
+      `${environment.platformProviderApiBaseUrl}${environment.platformProviderVerificationEventsEndpointPath}`,
       new ConsumerCertificateAssembler()
     );
   }

@@ -21,10 +21,10 @@ export class JewelryCertificatesApiEndpoint extends BaseApiEndpoint<
     );
   }
 
-  getByUserId(userId: number): Observable<JewelryCertificate[]> {
-    return this.http.get<JewelryCertificateResource[]>(`${this.endpointUrl}?userId=${userId}`).pipe(
+  getByUserId(_userId: number): Observable<JewelryCertificate[]> {
+    return this.http.get<JewelryCertificateResource[]>(`${this.endpointUrl}/certified`).pipe(
       map(resources => resources.map(r => this.assembler.toEntityFromResource(r))),
-      catchError(this.handleError('Failed to fetch certificates by userId'))
+      catchError(this.handleError('Failed to fetch jewelry certificates'))
     );
   }
 }
