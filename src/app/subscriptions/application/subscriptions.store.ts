@@ -35,22 +35,19 @@ export class SubscriptionsStore {
   }
 
   private loadSubscription(): void {
-    this.api.getSubscriptions().pipe(retry(2)).subscribe({
-      next: subscriptions => {
-        if (subscriptions.length > 0) {
-          this.subscriptionSignal.set(subscriptions[0]);
-        }
+    const userId = this.iamStore.currentUser()?.id;
+    if (!userId) return;
+
+    this.api.getSubscriptionByUser(userId).pipe(retry(2)).subscribe({
+      next: subscription => {
+        if (subscription) this.subscriptionSignal.set(subscription);
       },
-      error: () => {
-        // Silently ignore — store stays with null subscription (mock data drives the UI)
-      },
+      error: () => {},
     });
 
-    this.api.getBillingRecords().pipe(retry(2)).subscribe({
+    this.api.getBillingRecordsByUser(userId).pipe(retry(2)).subscribe({
       next: records => this.billingHistorySignal.set(records),
-      error: () => {
-        // Silently ignore — billing history stays empty on failure
-      },
+      error: () => {},
     });
   }
 

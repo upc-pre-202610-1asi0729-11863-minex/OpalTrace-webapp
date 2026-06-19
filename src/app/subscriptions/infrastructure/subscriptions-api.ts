@@ -18,20 +18,16 @@ export class SubscriptionsApi extends BaseApi {
     this.billingRecordsEndpoint = new BillingRecordsApiEndpoint(http);
   }
 
-  getSubscriptions(): Observable<Subscription[]> {
-    return this.subscriptionsEndpoint.getAll();
-  }
-
-  getSubscription(id: number): Observable<Subscription> {
-    return this.subscriptionsEndpoint.getById(id);
+  getSubscriptionByUser(userId: number): Observable<Subscription | null> {
+    return this.subscriptionsEndpoint.getByUserId(userId);
   }
 
   updateSubscription(subscription: Subscription): Observable<Subscription> {
     return this.subscriptionsEndpoint.update(subscription, subscription.id);
   }
 
-  getBillingRecords(): Observable<BillingRecord[]> {
-    return this.billingRecordsEndpoint.getAll();
+  getBillingRecordsByUser(userId: number): Observable<BillingRecord[]> {
+    return this.billingRecordsEndpoint.getByUserId(userId);
   }
 
   createBillingRecord(record: BillingRecord): Observable<BillingRecord> {
