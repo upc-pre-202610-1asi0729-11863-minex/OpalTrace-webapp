@@ -1,4 +1,4 @@
-﻿import { Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { BaseApi } from '../../shared/infrastructure/base-api';
@@ -14,11 +14,11 @@ export class CustodyApi extends BaseApi {
     this.locationUpdatesEndpoint = new LocationUpdatesApiEndpoint(http);
   }
 
-  getLocationUpdates(): Observable<LocationUpdateRecord[]> {
-    return this.locationUpdatesEndpoint.getAll();
+  getLocationHistory(batchPk: number): Observable<LocationUpdateRecord[]> {
+    return this.locationUpdatesEndpoint.getLocationHistory(batchPk);
   }
 
-  createLocationUpdate(record: LocationUpdateRecord): Observable<LocationUpdateRecord> {
-    return this.locationUpdatesEndpoint.create(record);
+  createLocationUpdate(batchPk: number, record: LocationUpdateRecord): Observable<LocationUpdateRecord> {
+    return this.locationUpdatesEndpoint.createLocationUpdate(batchPk, record);
   }
 }

@@ -27,19 +27,20 @@ export class CustodyStore {
     private readonly api: CustodyApi,
     private readonly mineralStore: MineralStore,
     private readonly mineralApi: MineralApi
-  ) {
-    this.loadLocationUpdates();
-  }
+  ) {}
 
-  private loadLocationUpdates(): void {
+  loadLocationHistoryForBatch(batchPk: number): void {
     this.loadingSignal.set(true);
-    this.api.getLocationUpdates().pipe(retry(2)).subscribe({
+    this.api.getLocationHistory(batchPk).pipe(retry(2)).subscribe({
       next: records => {
-        this.locationUpdatesSignal.set(records);
+        this.locationUpdatesSignal.update(current => [
+          ...current.filter(r => !records.some(nr => nr.id === r.id)),
+          ...records,
+        ]);
         this.loadingSignal.set(false);
       },
       error: err => {
-        this.errorSignal.set(err?.message ?? 'Error al cargar actualizaciones de ubicación');
+        this.errorSignal.set(err?.message ?? 'Error al cargar historial de ubicación');
         this.loadingSignal.set(false);
       },
     });
@@ -69,7 +70,7 @@ export class CustodyStore {
     });
 
     return new Promise(resolve => {
-      this.api.createLocationUpdate(newRecord).pipe(retry(2)).subscribe({
+      this.api.createLocationUpdate(batch.id, newRecord).pipe(retry(2)).subscribe({
         next: created => {
           this.locationUpdatesSignal.update(records => [...records, created]);
           resolve({ success: true });
