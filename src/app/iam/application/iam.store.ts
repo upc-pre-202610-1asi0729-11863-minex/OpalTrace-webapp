@@ -1,7 +1,7 @@
 import { computed, Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, catchError, map, of, tap } from 'rxjs';
+import { Observable, catchError, map, of, switchMap, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   AuthMockUser,
@@ -149,13 +149,13 @@ export class IamStore {
     const fullName = `${data.firstName} ${data.lastName}`.trim();
     const password = data.password ?? '';
 
-    const request$: Observable<SignInResponse> = data.segment === 'CONSUMER'
-      ? this.http.post<SignInResponse>(this.registerConsumerUrl, {
+    const register$: Observable<unknown> = data.segment === 'CONSUMER'
+      ? this.http.post(this.registerConsumerUrl, {
           email:    data.email,
           password,
           fullName,
         } satisfies RegisterConsumerBody)
-      : this.http.post<SignInResponse>(this.registerEnterpriseUrl, {
+      : this.http.post(this.registerEnterpriseUrl, {
           email:       data.email,
           password,
           companyName: data.companyName,
@@ -163,7 +163,10 @@ export class IamStore {
           segment:     data.segment,
         } satisfies RegisterEnterpriseBody);
 
-    return request$.pipe(
+    return register$.pipe(
+      switchMap(() =>
+        this.http.post<SignInResponse>(this.signInUrl, { email: data.email, password })
+      ),
       tap(res => {
         const user = this.mapResponse(res);
         user.gender = data.gender ?? 'M';
