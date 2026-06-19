@@ -22,15 +22,15 @@ export class BatchesApiEndpoint extends BaseApiEndpoint<
   }
 
   getByUserId(userId: number): Observable<MineralBatch[]> {
-    return this.http.get<MineralBatchResource[]>(`${this.endpointUrl}?userId=${userId}`).pipe(
+    return this.http.get<MineralBatchResource[]>(`${this.endpointUrl}/company/${userId}`).pipe(
       map(resources => resources.map(r => this.assembler.toEntityFromResource(r))),
       catchError(this.handleError('Failed to fetch batches by userId'))
     );
   }
 
   getBatchByBatchId(batchId: string): Observable<MineralBatch | null> {
-    return this.http.get<MineralBatchResource[]>(`${this.endpointUrl}?batchId=${encodeURIComponent(batchId)}`).pipe(
-      map(resources => resources.length > 0 ? this.assembler.toEntityFromResource(resources[0]) : null),
+    return this.http.get<MineralBatchResource>(`${this.endpointUrl}/code/${encodeURIComponent(batchId)}`).pipe(
+      map(resource => resource ? this.assembler.toEntityFromResource(resource) : null),
       catchError(this.handleError('Failed to fetch batch by batchId'))
     );
   }

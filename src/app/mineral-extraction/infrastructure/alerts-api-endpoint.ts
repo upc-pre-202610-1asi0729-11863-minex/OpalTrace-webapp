@@ -21,10 +21,18 @@ export class AlertsApiEndpoint extends BaseApiEndpoint<
     );
   }
 
-  getByUserId(userId: number): Observable<AnomalyAlert[]> {
-    return this.http.get<AnomalyAlertResource[]>(`${this.endpointUrl}?userId=${userId}`).pipe(
+  getByBatchPk(batchPk: number): Observable<AnomalyAlert[]> {
+    return this.http.get<AnomalyAlertResource[]>(`${this.endpointUrl}/${batchPk}/anomalies`).pipe(
       map(resources => resources.map(r => this.assembler.toEntityFromResource(r))),
-      catchError(this.handleError('Failed to fetch alerts by userId'))
+      catchError(this.handleError('Failed to fetch alerts by batchPk'))
+    );
+  }
+
+  createForBatch(batchPk: number, alert: AnomalyAlert): Observable<AnomalyAlert> {
+    const resource = this.assembler.toResourceFromEntity(alert);
+    return this.http.post<AnomalyAlertResource>(`${this.endpointUrl}/${batchPk}/anomalies`, resource).pipe(
+      map(r => this.assembler.toEntityFromResource(r)),
+      catchError(this.handleError('Failed to create alert for batch'))
     );
   }
 }

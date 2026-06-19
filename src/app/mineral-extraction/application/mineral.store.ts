@@ -45,7 +45,6 @@ export class MineralStore {
 
   constructor() {
     this.loadBatches();
-    this.loadAlerts();
   }
 
   private loadBatches(): void {
@@ -64,11 +63,12 @@ export class MineralStore {
     });
   }
 
-  private loadAlerts(): void {
-    const userId = this.iam.currentUser()?.id;
-    if (!userId) return;
-    this.api.getAlertsByUser(userId).pipe(retry(2)).subscribe({
-      next: alerts => this.alertsSignal.set(alerts),
+  loadAlertsByBatch(batchPk: number): void {
+    this.api.getAlertsByBatch(batchPk).pipe(retry(2)).subscribe({
+      next: alerts => this.alertsSignal.update(current => [
+        ...current.filter(a => !alerts.some(na => na.alertId === a.alertId)),
+        ...alerts,
+      ]),
       error: err => this.errorSignal.set(err.message ?? 'Error al cargar alertas'),
     });
   }
@@ -121,10 +121,15 @@ export class MineralStore {
       timestamp: new Date().toISOString(),
     });
 
-    this.api.createAlert(newAlert).pipe(retry(2)).subscribe({
-      next: created => this.alertsSignal.update(as => [...as, created]),
-      error: () => this.alertsSignal.update(as => [...as, newAlert]),
-    });
+    const batchEntity = this.batchesSignal().find(b => b.batchId === batchId);
+    if (batchEntity) {
+      this.api.createAlert(batchEntity.id, newAlert).pipe(retry(2)).subscribe({
+        next: created => this.alertsSignal.update(as => [...as, created]),
+        error: () => this.alertsSignal.update(as => [...as, newAlert]),
+      });
+    } else {
+      this.alertsSignal.update(as => [...as, newAlert]);
+    }
 
     this.batchesSignal.update(bs =>
       bs.map(b => {
