@@ -30,15 +30,15 @@ export class Login {
     this.errorMsg.set(null);
 
     const { email, password } = this.form.getRawValue();
-    const result = this.store.loginAndNavigate(email, password, this.router);
-
-    this.loading.set(false);
-    if (result.lockout) {
-      this.isLockout.set(true);
-      this.errorMsg.set(result.error);
-    } else if (result.error) {
-      this.errorMsg.set(result.error);
-    }
+    this.store.loginAndNavigate(email, password, this.router).subscribe(result => {
+      this.loading.set(false);
+      if (result.lockout) {
+        this.isLockout.set(true);
+        this.errorMsg.set(result.error);
+      } else if (result.error) {
+        this.errorMsg.set(result.error);
+      }
+    });
   }
 
   get emailInvalid() { return this.form.get('email')?.invalid && this.form.get('email')?.touched; }

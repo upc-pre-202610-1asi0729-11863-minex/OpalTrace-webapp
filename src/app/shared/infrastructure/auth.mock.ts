@@ -14,6 +14,7 @@ export interface AuthMockUser {
   ruc: string;
   firstName: string;
   lastName: string;
+  fullName?: string;
   gender: 'M' | 'F';
   password?: string;
 }

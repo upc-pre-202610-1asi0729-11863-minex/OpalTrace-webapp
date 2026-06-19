@@ -403,21 +403,30 @@ export class Onboarding implements OnInit {
 
   back() { this.step.update(s => (s > 1 ? (s - 1) as 1 | 2 | 3 | 4 : s)); }
 
+  registerError = signal<string | null>(null);
+  registerLoading = signal(false);
+
   confirm() {
     if (this.paymentForm.invalid) { this.paymentForm.markAllAsTouched(); return; }
     const profile  = this.selectedProfile()!;
     const segment: Segment = profile === 'CONSUMER' ? 'CONSUMER' : profile === 'MINING' ? 'MINING' : 'JEWELRY';
     const v = this.dataForm.getRawValue();
+    this.registerLoading.set(true);
+    this.registerError.set(null);
     this.store.completeOnboarding({
       segment,
       planTier:    this.selectedPlan(),
+      email:       v.email,
       firstName:   v.firstName,
       lastName:    v.lastName,
       gender:      v.gender as 'M' | 'F',
       companyName: v.companyName,
       ruc:         v.ruc,
       password:    v.password,
-    }, this.router);
+    }, this.router).subscribe(result => {
+      this.registerLoading.set(false);
+      if (result.error) this.registerError.set(result.error);
+    });
   }
 
   formatExpiry(event: Event): void {
