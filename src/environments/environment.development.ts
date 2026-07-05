@@ -5,6 +5,8 @@ export const environment = {
   // OpalTrace — IAM
   platformProviderSignInEndpointPath: '/authentication/sign-in',
   platformProviderSignUpEndpointPath: '/authentication/sign-up',
+  platformProviderForgotPasswordEndpointPath: '/authentication/forgot-password',
+  platformProviderResetPasswordEndpointPath: '/authentication/reset-password',
 
   // OpalTrace — Mineral Extraction
   platformProviderBatchesEndpointPath: '/mineral-batches',

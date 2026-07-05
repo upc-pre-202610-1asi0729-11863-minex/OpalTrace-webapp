@@ -1,7 +1,7 @@
 import { computed, Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, catchError, map, of, tap } from 'rxjs';
+import { Observable, catchError, map, of, switchMap, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   AuthMockUser,
@@ -76,9 +76,12 @@ export class IamStore {
   readonly isPlatinum    = computed(() => this.currentPlan() === 'PLATINUM');
   readonly isGoldOrAbove = computed(() => ['GOLD', 'PLATINUM'].includes(this.currentPlan() ?? ''));
 
-  private readonly signInUrl   = `${environment.platformProviderApiBaseUrl}${environment.platformProviderSignInEndpointPath}`;
+  private readonly signInUrl            = `${environment.platformProviderApiBaseUrl}${environment.platformProviderSignInEndpointPath}`;
   private readonly registerEnterpriseUrl = `${environment.platformProviderApiBaseUrl}/users/register/enterprise`;
   private readonly registerConsumerUrl   = `${environment.platformProviderApiBaseUrl}/users/register/consumer`;
+  private readonly forgotPasswordUrl     = `${environment.platformProviderApiBaseUrl}${environment.platformProviderForgotPasswordEndpointPath}`;
+  private readonly resetPasswordUrl      = `${environment.platformProviderApiBaseUrl}${environment.platformProviderResetPasswordEndpointPath}`;
+  private readonly changePasswordUrl     = (userId: number) => `${environment.platformProviderApiBaseUrl}/users/${userId}/password`;
 
   constructor(private readonly http: HttpClient) {
     this.restoreSession();
@@ -149,13 +152,13 @@ export class IamStore {
     const fullName = `${data.firstName} ${data.lastName}`.trim();
     const password = data.password ?? '';
 
-    const request$: Observable<SignInResponse> = data.segment === 'CONSUMER'
-      ? this.http.post<SignInResponse>(this.registerConsumerUrl, {
+    const register$: Observable<unknown> = data.segment === 'CONSUMER'
+      ? this.http.post(this.registerConsumerUrl, {
           email:    data.email,
           password,
           fullName,
         } satisfies RegisterConsumerBody)
-      : this.http.post<SignInResponse>(this.registerEnterpriseUrl, {
+      : this.http.post(this.registerEnterpriseUrl, {
           email:       data.email,
           password,
           companyName: data.companyName,
@@ -163,7 +166,8 @@ export class IamStore {
           segment:     data.segment,
         } satisfies RegisterEnterpriseBody);
 
-    return request$.pipe(
+    return register$.pipe(
+      switchMap(() => this.http.post<SignInResponse>(this.signInUrl, { email: data.email, password })),
       tap(res => {
         const user = this.mapResponse(res);
         user.gender = data.gender ?? 'M';
@@ -180,12 +184,27 @@ export class IamStore {
     );
   }
 
-  forgotPassword(_email: string): { sent: boolean } {
-    return { sent: true };
+  forgotPassword(email: string): Observable<{ message: string; resetToken: string }> {
+    return this.http.post<{ message: string; resetToken: string }>(this.forgotPasswordUrl, { email }).pipe(
+      catchError(() => of({ message: 'Si el correo está registrado, recibirás un enlace en breve.', resetToken: '' }))
+    );
   }
 
-  resetPassword(_newPassword: string, _token: string): { success: boolean } {
-    return { success: true };
+  resetPassword(newPassword: string, token: string): Observable<{ success: boolean }> {
+    return this.http.post<{ userId: number; success: boolean }>(this.resetPasswordUrl, { token, newPassword }).pipe(
+      map(() => ({ success: true })),
+      catchError(() => of({ success: false }))
+    );
+  }
+
+  changePassword(userId: number, currentPassword: string, newPassword: string): Observable<{ error: string | null }> {
+    return this.http.put(this.changePasswordUrl(userId), { userId, currentPassword, newPassword }).pipe(
+      map(() => ({ error: null })),
+      catchError(err => {
+        const msg = err?.error?.message ?? 'Error al cambiar la contraseña.';
+        return of({ error: msg });
+      })
+    );
   }
 
   logout(router: Router): void {

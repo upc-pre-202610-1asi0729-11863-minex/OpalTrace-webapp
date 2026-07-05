@@ -21,7 +21,6 @@ export class ForgotPassword {
 
   submit() {
     if (this.form.invalid) { this.form.markAllAsTouched(); return; }
-    this.store.forgotPassword(this.form.getRawValue().email);
-    this.sent.set(true);
+    this.store.forgotPassword(this.form.getRawValue().email).subscribe(() => this.sent.set(true));
   }
 }

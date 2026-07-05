@@ -5,29 +5,31 @@ export const environment = {
   // OpalTrace — IAM
   platformProviderSignInEndpointPath: '/authentication/sign-in',
   platformProviderSignUpEndpointPath: '/authentication/sign-up',
+  platformProviderForgotPasswordEndpointPath: '/authentication/forgot-password',
+  platformProviderResetPasswordEndpointPath: '/authentication/reset-password',
 
   // OpalTrace — Mineral Extraction
-  platformProviderBatchesEndpointPath: '/batches',
-  platformProviderAlertsEndpointPath: '/alerts',
+  platformProviderBatchesEndpointPath: '/mineral-batches',
+  platformProviderAlertsEndpointPath: '/mineral-batches',
 
   // OpalTrace — Custody Chain
-  platformProviderLocationUpdatesEndpointPath: '/locationUpdates',
+  platformProviderLocationUpdatesEndpointPath: '/mineral-batches',
 
   // OpalTrace — Refinery Processing
-  platformProviderRefineryBatchesEndpointPath: '/refineryBatches',
-  platformProviderSublotsEndpointPath: '/sublots',
-  platformProviderShrinkageRecordsEndpointPath: '/shrinkageRecords',
+  platformProviderRefineryBatchesEndpointPath: '/refinery/batches',
+  platformProviderSublotsEndpointPath: '/refinery/batches',
+  platformProviderShrinkageRecordsEndpointPath: '/refinery/batches',
 
   // OpalTrace — Jewelry Inventory
-  platformProviderJewelryProductsEndpointPath: '/jewelryProducts',
-  platformProviderCertificatesEndpointPath: '/certificates',
+  platformProviderJewelryProductsEndpointPath: '/jewelry-inventory',
+  platformProviderCertificatesEndpointPath: '/jewelry-inventory',
 
   // OpalTrace — Consumer Experience
-  platformProviderVerificationEventsEndpointPath: '/verificationEvents',
+  platformProviderVerificationEventsEndpointPath: '/verify',
 
   // OpalTrace — Subscriptions
   platformProviderSubscriptionsEndpointPath: '/subscriptions',
-  platformProviderBillingRecordsEndpointPath: '/billingRecords',
+  platformProviderBillingRecordsEndpointPath: '/billing',
 
   logoProviderApiBaseUrl: 'https://img.logo.dev.com/'
 };

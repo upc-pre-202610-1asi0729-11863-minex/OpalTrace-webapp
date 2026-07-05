@@ -63,7 +63,18 @@
     "welcome-back": "Welcome back",
     "no-account": "Don't have an account?",
     "loading": "Signing in...",
-    "lockout": "Account temporarily locked. Too many failed attempts. Wait 15 minutes."
+    "lockout": "Account temporarily locked. Too many failed attempts. Wait 15 minutes.",
+    "reset-title": "New Password",
+    "reset-new-password": "New password (min. 8 chars, include uppercase and number)",
+    "reset-confirm": "Confirm password",
+    "reset-placeholder": "••••••••",
+    "reset-min-length": "Minimum 8 characters, at least one uppercase letter and one number",
+    "reset-mismatch": "Passwords do not match",
+    "reset-btn": "Reset Password",
+    "reset-success": "Password reset successfully. Redirecting to sign in...",
+    "reset-expired": "The link has expired or is invalid.",
+    "reset-request-new": "Request a new link",
+    "reset-back": "Back to Sign In"
   },
   "status": {
     "CERTIFIED": "Certified",

@@ -64,7 +64,18 @@
     "welcome-back": "Bienvenido de vuelta",
     "no-account": "¿No tienes cuenta?",
     "loading": "Ingresando...",
-    "lockout": "Cuenta bloqueada temporalmente. Demasiados intentos fallidos. Espera 15 minutos."
+    "lockout": "Cuenta bloqueada temporalmente. Demasiados intentos fallidos. Espera 15 minutos.",
+    "reset-title": "Nueva contraseña",
+    "reset-new-password": "Nueva contraseña (mín. 8 caracteres, incluye mayúscula y número)",
+    "reset-confirm": "Confirmar contraseña",
+    "reset-placeholder": "••••••••",
+    "reset-min-length": "Mínimo 8 caracteres, incluye al menos una mayúscula y un número",
+    "reset-mismatch": "Las contraseñas no coinciden",
+    "reset-btn": "Restablecer contraseña",
+    "reset-success": "Contraseña restablecida correctamente. Redirigiendo al inicio de sesión...",
+    "reset-expired": "El enlace ha expirado o no es válido.",
+    "reset-request-new": "Solicitar nuevo enlace",
+    "reset-back": "Volver al inicio de sesión"
   },
   "status": {
     "CERTIFIED": "Certificado",
