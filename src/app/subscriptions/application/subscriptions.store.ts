@@ -1,5 +1,8 @@
 import { computed, Injectable, inject, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { retry } from 'rxjs/operators';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { TranslateService } from '@ngx-translate/core';
 import { IamStore } from '../../iam/application/iam.store';
 import { PlanTier } from '../../shared/infrastructure/auth.mock';
 import { SubscriptionsApi } from '../infrastructure/subscriptions-api';
@@ -8,17 +11,18 @@ import { BillingRecord } from '../domain/model/billing-record.entity';
 
 @Injectable({ providedIn: 'root' })
 export class SubscriptionsStore {
-  private readonly api      = inject(SubscriptionsApi);
-  private readonly iamStore = inject(IamStore);
+  private readonly api       = inject(SubscriptionsApi);
+  private readonly iamStore  = inject(IamStore);
+  private readonly snackBar  = inject(MatSnackBar);
+  private readonly translate = inject(TranslateService);
 
-  readonly subscriptionSignal  = signal<Subscription | null>(null);
+  readonly subscriptionSignal   = signal<Subscription | null>(null);
   readonly billingHistorySignal = signal<BillingRecord[]>([]);
+  readonly upgradeLoading       = signal(false);
 
-  // Computed signals exposed to the presentation layer
   readonly currentPlan = computed(() => this.subscriptionSignal()?.plan ?? null);
   readonly isActive    = computed(() => this.subscriptionSignal()?.status === 'ACTIVE');
 
-  // Aliases kept for backward-compatibility with existing views
   readonly activePlan = computed(() => this.iamStore.currentPlan());
   readonly segment    = computed(() => this.iamStore.currentSegment());
 
@@ -51,48 +55,39 @@ export class SubscriptionsStore {
     });
   }
 
-  upgradePlan(newPlan: PlanTier): void {
-    this.iamStore.upgradePlan(newPlan);
-
-    const planLabel = newPlan === 'PLATINUM' ? 'Platinum' : newPlan === 'GOLD' ? 'Gold' : 'Silver';
-    const price     = newPlan === 'PLATINUM' ? 149 : newPlan === 'GOLD' ? 79 : 15;
-    const today     = new Date().toLocaleDateString('es-PE');
-
-    const newRecord = new BillingRecord({
-      id: Date.now(),
-      userId: this.iamStore.currentUser()?.id ?? 0,
-      date: today,
-      plan: planLabel,
-      amount: price,
-      status: 'COMPLETED',
-    });
-
-    this.api.createBillingRecord(newRecord).pipe(retry(2)).subscribe({
-      next: created => {
-        this.billingHistorySignal.update(h => [created, ...h]);
-      },
-      error: () => {
-        this.billingHistorySignal.update(h => [newRecord, ...h]);
-      },
-    });
+  upgradePlan(newPlan: PlanTier, paymentMethodToken = 'tok_visa'): void {
+    const user = this.iamStore.currentUser();
+    if (!user) return;
 
     const current = this.subscriptionSignal();
-    if (current) {
-      const renewalDate = new Date();
-      renewalDate.setMonth(renewalDate.getMonth() + 1);
+    const price = this.tierPrice(newPlan);
+    this.upgradeLoading.set(true);
 
-      const updated = new Subscription({
-        id: current.id,
-        userId: current.userId,
-        plan: newPlan as SubscriptionPlan,
-        status: 'ACTIVE',
-        renewalDate: renewalDate.toISOString(),
-        price,
+    if (current?.id) {
+      this.api.upgradeSubscription(current.id, user.id, newPlan, paymentMethodToken).subscribe({
+        next: updated => {
+          this.subscriptionSignal.set(updated);
+          this.iamStore.upgradePlan(newPlan);
+          this.upgradeLoading.set(false);
+          this.showSnack('subscription.upgrade-success');
+        },
+        error: (err: HttpErrorResponse) => {
+          this.upgradeLoading.set(false);
+          this.handlePaymentError(err);
+        },
       });
-
-      this.api.updateSubscription(updated).pipe(retry(2)).subscribe({
-        next: s => this.subscriptionSignal.set(s),
-        error: () => this.subscriptionSignal.set(updated),
+    } else {
+      this.api.activateSubscription(user.id, newPlan, paymentMethodToken, price).subscribe({
+        next: created => {
+          this.subscriptionSignal.set(created);
+          this.iamStore.upgradePlan(newPlan);
+          this.upgradeLoading.set(false);
+          this.showSnack('subscription.upgrade-success');
+        },
+        error: (err: HttpErrorResponse) => {
+          this.upgradeLoading.set(false);
+          this.handlePaymentError(err);
+        },
       });
     }
   }
@@ -121,5 +116,33 @@ export class SubscriptionsStore {
 
     return { cancelDate: formattedDate, readOnlyDays: 30 };
   }
-}
 
+  private handlePaymentError(err: HttpErrorResponse): void {
+    if (err.status === 422) {
+      const code: string = err.error?.code ?? '';
+      if (code === 'PLAN_TIER_INSUFFICIENT') {
+        this.showSnack('subscription.plan-limit-exceeded');
+        return;
+      }
+      this.showSnack('subscription.payment-failed');
+      return;
+    }
+    if (err.status === 402) {
+      this.showSnack('subscription.payment-failed');
+      return;
+    }
+    this.showSnack('subscription.payment-failed');
+  }
+
+  private showSnack(key: string): void {
+    const msg    = this.translate.instant(key);
+    const action = this.translate.instant('common.close');
+    this.snackBar.open(msg, action, { duration: 5000, panelClass: ['ot-snack'] });
+  }
+
+  private tierPrice(tier: PlanTier): number {
+    if (tier === 'PLATINUM') return 149;
+    if (tier === 'GOLD') return 79;
+    return 15;
+  }
+}

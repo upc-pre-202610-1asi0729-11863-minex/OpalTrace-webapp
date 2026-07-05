@@ -132,7 +132,15 @@
     "plan-plat-jewelry-f2": "External material reception",
     "plan-plat-jewelry-f3": "Exportable ESG report",
     "plan-plat-consumer-f1": "QR verification",
-    "plan-plat-consumer-f2": "Verification analytics"
+    "plan-plat-consumer-f2": "Verification analytics",
+    "upgrade-success": "Plan upgraded successfully. New features are now available.",
+    "plan-limit-exceeded": "Your current plan does not allow this operation. Upgrade your subscription to continue.",
+    "payment-processing": "Processing payment...",
+    "payment-failed": "Payment could not be processed. Please check your card details.",
+    "btn-confirm-payment": "Confirm & Pay",
+    "test-card-hint": "Test environment — use tok_visa to approve",
+    "downgrade-scheduled": "Plan change scheduled for end of the current billing cycle.",
+    "cancel-confirmed": "Subscription cancelled. Access until {{ date }}."
   },
   "dashboard": {
     "welcome": "Welcome",
@@ -299,7 +307,8 @@
     "pending": "Pending",
     "rejected": "Rejected",
     "no-cert": "No cert.",
-    "blocked": "Blocked"
+    "blocked": "Blocked",
+    "close": "Close"
   },
   "verify": {
     "title": "Verify Authenticity",

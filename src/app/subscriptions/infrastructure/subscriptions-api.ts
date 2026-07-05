@@ -22,6 +22,14 @@ export class SubscriptionsApi extends BaseApi {
     return this.subscriptionsEndpoint.getByUserId(userId);
   }
 
+  activateSubscription(userId: number, planTier: string, paymentMethodToken: string, amount: number): Observable<Subscription> {
+    return this.subscriptionsEndpoint.activate(userId, planTier, paymentMethodToken, amount);
+  }
+
+  upgradeSubscription(subscriptionId: number, userId: number, newTier: string, paymentMethodToken: string): Observable<Subscription> {
+    return this.subscriptionsEndpoint.upgradePlan(subscriptionId, userId, newTier, paymentMethodToken);
+  }
+
   updateSubscription(subscription: Subscription): Observable<Subscription> {
     return this.subscriptionsEndpoint.update(subscription, subscription.id);
   }

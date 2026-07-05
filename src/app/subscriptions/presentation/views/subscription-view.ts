@@ -1,5 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { SubscriptionsStore } from '../../application/subscriptions.store';
 import { PlanTier } from '../../../shared/infrastructure/auth.mock';
 
@@ -19,12 +20,14 @@ interface PlanCard {
   styleUrl: './subscription-view.css',
 })
 export class SubscriptionView {
-  store = inject(SubscriptionsStore);
+  store     = inject(SubscriptionsStore);
+  translate = inject(TranslateService);
+  snackBar  = inject(MatSnackBar);
 
-  toastMsg    = signal<string | null>(null);
-  cancelModal = signal(false);
+  cancelModal    = signal(false);
   upgradeModal   = signal<PlanTier | null>(null);
   downgradeModal = signal<PlanTier | null>(null);
+  cardToken      = signal('tok_visa');
 
   readonly planCards = computed<PlanCard[]>(() => {
     const seg        = this.store.segment();
@@ -34,7 +37,7 @@ export class SubscriptionView {
       id: 'SILVER',
       nameKey: 'subscription.plan-silver',
       price: 15,
-      featureKeys: ['subscription.plan-silver-f1','subscription.plan-silver-f2','subscription.plan-silver-f3'],
+      featureKeys: ['subscription.plan-silver-f1', 'subscription.plan-silver-f2', 'subscription.plan-silver-f3'],
       locked:       !isConsumer,
       lockedMsgKey: !isConsumer ? 'subscription.locked-companies' : undefined,
     };
@@ -45,10 +48,10 @@ export class SubscriptionView {
         : seg === 'MINING' ? 'subscription.plan-gold-mining' : 'subscription.plan-gold-jewelry',
       price: 79,
       featureKeys: seg === 'MINING'
-        ? ['subscription.plan-gold-mining-f1','subscription.plan-gold-mining-f2','subscription.plan-gold-mining-f3','subscription.plan-gold-mining-f4']
+        ? ['subscription.plan-gold-mining-f1', 'subscription.plan-gold-mining-f2', 'subscription.plan-gold-mining-f3', 'subscription.plan-gold-mining-f4']
         : seg === 'JEWELRY'
-        ? ['subscription.plan-gold-jewelry-f1','subscription.plan-gold-jewelry-f2','subscription.plan-gold-jewelry-f3','subscription.plan-gold-jewelry-f4']
-        : ['subscription.plan-gold-consumer-f1','subscription.plan-gold-consumer-f2'],
+        ? ['subscription.plan-gold-jewelry-f1', 'subscription.plan-gold-jewelry-f2', 'subscription.plan-gold-jewelry-f3', 'subscription.plan-gold-jewelry-f4']
+        : ['subscription.plan-gold-consumer-f1', 'subscription.plan-gold-consumer-f2'],
       locked:       isConsumer,
       lockedMsgKey: isConsumer ? 'subscription.locked-consumers' : undefined,
     };
@@ -59,21 +62,16 @@ export class SubscriptionView {
         : seg === 'MINING' ? 'subscription.plan-platinum-mining' : 'subscription.plan-platinum-jewelry',
       price: 149,
       featureKeys: seg === 'MINING'
-        ? ['subscription.plan-plat-mining-f1','subscription.plan-plat-mining-f2','subscription.plan-plat-mining-f3','subscription.plan-plat-mining-f4']
+        ? ['subscription.plan-plat-mining-f1', 'subscription.plan-plat-mining-f2', 'subscription.plan-plat-mining-f3', 'subscription.plan-plat-mining-f4']
         : seg === 'JEWELRY'
-        ? ['subscription.plan-plat-jewelry-f1','subscription.plan-plat-jewelry-f2','subscription.plan-plat-jewelry-f3']
-        : ['subscription.plan-plat-consumer-f1','subscription.plan-plat-consumer-f2'],
+        ? ['subscription.plan-plat-jewelry-f1', 'subscription.plan-plat-jewelry-f2', 'subscription.plan-plat-jewelry-f3']
+        : ['subscription.plan-plat-consumer-f1', 'subscription.plan-plat-consumer-f2'],
       locked:       isConsumer,
       lockedMsgKey: isConsumer ? 'subscription.locked-consumers' : undefined,
     };
 
     return [silverCard, goldCard, platinumCard];
   });
-
-  showToast(msg: string) {
-    this.toastMsg.set(msg);
-    setTimeout(() => this.toastMsg.set(null), 3500);
-  }
 
   openUpgrade(plan: PlanTier)   { this.upgradeModal.set(plan); }
   openDowngrade(plan: PlanTier) { this.downgradeModal.set(plan); }
@@ -82,20 +80,30 @@ export class SubscriptionView {
   confirmUpgrade() {
     const plan = this.upgradeModal();
     if (!plan) return;
-    this.store.upgradePlan(plan);
+    const token = this.cardToken().trim() || 'tok_visa';
+    this.store.upgradePlan(plan, token);
     this.closeModals();
-    this.showToast(`✓ ${plan} — nuevas funcionalidades habilitadas`);
   }
 
   confirmDowngrade() {
     this.closeModals();
-    this.showToast('Downgrade programado para fin del ciclo actual');
+    const msg    = this.translate.instant('subscription.downgrade-scheduled');
+    const action = this.translate.instant('common.close');
+    this.snackBar.open(msg, action, { duration: 4000 });
   }
 
   confirmCancel() {
     const result = this.store.cancelPlan();
     this.closeModals();
-    this.showToast(`Suscripción cancelada — acceso hasta ${result.cancelDate}`);
+    const msg    = this.translate.instant('subscription.cancel-confirmed', { date: result.cancelDate });
+    const action = this.translate.instant('common.close');
+    this.snackBar.open(msg, action, { duration: 5000 });
+  }
+
+  confirmDownload() {
+    const msg    = this.translate.instant('subscription.download-receipt');
+    const action = this.translate.instant('common.close');
+    this.snackBar.open(msg, action, { duration: 3000 });
   }
 
   isCurrent(planId: PlanTier) { return this.store.activePlan() === planId; }

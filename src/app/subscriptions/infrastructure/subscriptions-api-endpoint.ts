@@ -27,4 +27,26 @@ export class SubscriptionsApiEndpoint extends BaseApiEndpoint<
       catchError(this.handleError('Failed to fetch subscription by userId'))
     );
   }
+
+  activate(userId: number, planTier: string, paymentMethodToken: string, amount: number): Observable<Subscription> {
+    return this.http.post<SubscriptionResource>(this.endpointUrl, {
+      userId,
+      planTier,
+      billingCycle: 'MONTHLY',
+      paymentMethodToken,
+      amount,
+    }).pipe(
+      map(r => this.assembler.toEntityFromResource(r)),
+    );
+  }
+
+  upgradePlan(subscriptionId: number, userId: number, newTier: string, paymentMethodToken: string): Observable<Subscription> {
+    return this.http.put<SubscriptionResource>(`${this.endpointUrl}/${subscriptionId}/upgrade`, {
+      userId,
+      newTier,
+      paymentMethodToken,
+    }).pipe(
+      map(r => this.assembler.toEntityFromResource(r)),
+    );
+  }
 }
