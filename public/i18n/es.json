@@ -611,6 +611,7 @@
     "plan-selected-label": "Plan seleccionado:",
     "total-monthly": "Total mensual:",
     "btn-confirm": "Confirmar y activar",
+    "btn-processing": "Procesando...",
     "footer": "© 2026 MINEX. Todos los derechos reservados.",
     "email-col-format": "FORMATO",
     "email-col-biz-domain": "DOMINIO EMPRESARIAL",
@@ -1002,6 +1003,9 @@
     "cvv": "CVV",
     "no-card": "No tienes un método de pago guardado",
     "save-billing": "Guardar método de pago",
-    "billing-saved": "Método de pago guardado"
+    "billing-saved": "Método de pago guardado",
+    "add-billing": "Agregar método de pago",
+    "new-card": "Nuevo método de pago",
+    "delete-card": "Eliminar este método"
   }
 }
