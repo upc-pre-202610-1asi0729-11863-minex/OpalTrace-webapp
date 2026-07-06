@@ -497,6 +497,7 @@
     "first-name": "First Name",
     "last-name": "Last Name",
     "gender": "Gender",
+    "gender-placeholder": "Select an option",
     "gender-m": "Male",
     "gender-f": "Female",
     "email": "Email",

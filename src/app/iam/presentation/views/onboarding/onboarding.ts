@@ -185,7 +185,7 @@ export class Onboarding implements OnInit {
   dataForm = new FormGroup({
     firstName:       new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     lastName:        new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-    gender:          new FormControl<'M' | 'F'>('M', { nonNullable: true }),
+    gender:          new FormControl<'M' | 'F' | null>(null, { validators: [Validators.required] }),
     email:           new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     companyName:     new FormControl('', { nonNullable: true }),
     ruc:             new FormControl('', { nonNullable: true }),

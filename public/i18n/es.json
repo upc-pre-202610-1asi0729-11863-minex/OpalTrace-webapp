@@ -498,6 +498,7 @@
     "first-name": "Nombre",
     "last-name": "Apellido",
     "gender": "Género",
+    "gender-placeholder": "Selecciona una opción",
     "gender-m": "Masculino",
     "gender-f": "Femenino",
     "email": "Correo electrónico",
