@@ -139,20 +139,18 @@ export class ConsumerStore {
               },
             } as VerifyResult;
           }
-          try {
-            const registry = JSON.parse(localStorage.getItem('ot_certs') ?? '{}');
-            const local = registry[id];
-            if (local) {
-              return {
-                authentic: true,
-                cert: {
-                  certId: id, productName: local.productName,
-                  certState: 'CERTIFIED', issuedAt: local.issuedAt,
-                  batchId: local.batchId ?? null, events,
-                },
-              } as VerifyResult;
-            }
-          } catch { /* storage not available */ }
+          const local = this.readLocalCert(id);
+          if (local) {
+            return {
+              authentic: true,
+              cert: {
+                certId: id, productName: local.productName,
+                certState: 'CERTIFIED', issuedAt: local.issuedAt,
+                batchId: local.batchId ?? null,
+                events: this.eventsFromPoints(local.points),
+              },
+            } as VerifyResult;
+          }
           return {
             authentic: false,
             error: verification.failureReason ?? `Certificado "${certId}" no encontrado en el registro OpalTrace.`,
@@ -187,23 +185,38 @@ export class ConsumerStore {
         return { authentic: false, cert: { certId: cert.certId, productName: cert.productName, certState: cert.certState, issuedAt: cert.issuedAt, batchId: cert.batchId, events }, error: 'Este certificado ha sido revocado.' };
       return { authentic: true, cert: { certId: cert.certId, productName: cert.productName, certState: cert.certState, issuedAt: cert.issuedAt, batchId: cert.batchId, events } };
     }
+    const local = this.readLocalCert(id);
+    if (local) {
+      return {
+        authentic: true,
+        cert: { certId: id, productName: local.productName, certState: 'CERTIFIED', issuedAt: local.issuedAt, batchId: local.batchId ?? null, events: this.eventsFromPoints(local.points) },
+      };
+    }
+    return { authentic: false, error: `Certificado "${id}" no encontrado en el registro OpalTrace.` };
+  }
+
+  private readLocalCert(id: string): { productName: string; issuedAt: string; batchId: string | null; points?: any[] } | null {
     try {
       const registry = JSON.parse(localStorage.getItem('ot_certs') ?? '{}');
-      const local = registry[id];
-      if (local) {
-        return {
-          authentic: true,
-          cert: { certId: id, productName: local.productName, certState: 'CERTIFIED', issuedAt: local.issuedAt, batchId: local.batchId ?? null, events: [] },
-        };
-      }
-    } catch { /* storage not available */ }
-    return { authentic: false, error: `Certificado "${id}" no encontrado en el registro OpalTrace.` };
+      return registry[id] ?? null;
+    } catch {
+      return null;
+    }
+  }
+
+  private eventsFromPoints(points?: any[]): Array<{ type: string; timestamp: string; actor: string; txHash?: string }> {
+    return (points ?? []).map(p => ({
+      type:      this.EVENT_LABELS[p.eventType] ?? p.eventType,
+      timestamp: p.timestamp,
+      actor:     p.actorName ?? '—',
+      txHash:    p.blockchainTxHash,
+    }));
   }
 
   getTraceabilityPoints(certId: string): Observable<GeoPoint[]> {
     const id = certId.trim().toUpperCase();
     return this.api.getTraceabilityMap(id).pipe(
-      map((items: any[]) => items.map(p => ({
+      map((items: any[]) => (items.length > 0 ? items : this.readLocalCert(id)?.points ?? []).map(p => ({
         lat:       p.latitude,
         lon:       p.longitude,
         eventType: p.eventType,
@@ -211,7 +224,16 @@ export class ConsumerStore {
         actor:     p.actorName,
         txHash:    p.blockchainTxHash,
       }))),
-      catchError(() => of(MOCK_GEO_POINTS[id] ?? []))
+      catchError(() => {
+        const localPoints = this.readLocalCert(id)?.points;
+        if (localPoints && localPoints.length > 0) {
+          return of(localPoints.map(p => ({
+            lat: p.latitude, lon: p.longitude, eventType: p.eventType,
+            timestamp: p.timestamp, actor: p.actorName, txHash: p.blockchainTxHash,
+          })));
+        }
+        return of(MOCK_GEO_POINTS[id] ?? []);
+      })
     );
   }
 

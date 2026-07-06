@@ -1,9 +1,21 @@
-import { Injectable, signal, computed, inject } from '@angular/core';
+import { Injectable, signal, computed, inject, effect } from '@angular/core';
 import { retry } from 'rxjs/operators';
 import { IamStore } from '../../iam/application/iam.store';
 import { JewelryApi } from '../infrastructure/jewelry-api';
 import { JewelryProduct, CertState, TraceabilityEvent } from '../domain/model/jewelry-product.entity';
 import { JewelryCertificate } from '../domain/model/jewelry-certificate.entity';
+import { LocalPersistence } from '../../shared/infrastructure/local-persistence';
+
+interface JewelryProductProps {
+  id: number; productId: string; name: string; weightG: number;
+  batchId: string | null; certId: string | null; isCertifiedSource: boolean;
+  certState: CertState; isBlocked: boolean; supplier: string | null; events: TraceabilityEvent[];
+}
+
+interface JewelryCertificateProps {
+  id: number; certId: string; productName: string; certState: 'CERTIFIED' | 'REVOKED';
+  signatureValid: boolean; batchId: string | null; issuedAt: string; jewelerName: string | null;
+}
 
 // Re-export domain types consumed by presentation layer
 export type { CertState, TraceabilityEvent };
@@ -28,6 +40,7 @@ const REQUIRED_EVENTS: TraceabilityEventType[] = [
 export class JewelryStore {
   private readonly api = inject(JewelryApi);
   private readonly iam = inject(IamStore);
+  private readonly persistence = inject(LocalPersistence);
 
   private certSeq = 100;
   private extSeq  = 1;
@@ -66,8 +79,38 @@ export class JewelryStore {
   );
 
   constructor() {
+    this.hydrateFromCache();
     this.loadProducts();
     this.loadCertificates();
+    effect(() => {
+      this.persistence.write<JewelryProductProps>('jewelry-certified', this.certifiedStockSignal().map(p => this.productToProps(p)));
+      this.persistence.write<JewelryProductProps>('jewelry-external',  this.externalStockSignal().map(p => this.productToProps(p)));
+      this.persistence.write<JewelryCertificateProps>('jewelry-certs', this.certificatesSignal().map(c => this.certToProps(c)));
+    });
+  }
+
+  private productToProps(p: JewelryProduct): JewelryProductProps {
+    return {
+      id: p.id, productId: p.productId, name: p.name, weightG: p.weightG,
+      batchId: p.batchId, certId: p.certId, isCertifiedSource: p.isCertifiedSource,
+      certState: p.certState, isBlocked: p.isBlocked, supplier: p.supplier, events: p.events,
+    };
+  }
+
+  private certToProps(c: JewelryCertificate): JewelryCertificateProps {
+    return {
+      id: c.id, certId: c.certId, productName: c.productName, certState: c.certState,
+      signatureValid: c.signatureValid, batchId: c.batchId, issuedAt: c.issuedAt, jewelerName: c.jewelerName,
+    };
+  }
+
+  private hydrateFromCache(): void {
+    const certified = this.persistence.read<JewelryProductProps>('jewelry-certified');
+    const external  = this.persistence.read<JewelryProductProps>('jewelry-external');
+    const certs     = this.persistence.read<JewelryCertificateProps>('jewelry-certs');
+    if (certified.length > 0) this.certifiedStockSignal.set(certified.map(p => new JewelryProduct(p)));
+    if (external.length > 0)  this.externalStockSignal.set(external.map(p => new JewelryProduct(p)));
+    if (certs.length > 0)     this.certificatesSignal.set(certs.map(c => new JewelryCertificate(c)));
   }
 
   private loadProducts(): void {
@@ -76,10 +119,12 @@ export class JewelryStore {
     this.loadingSignal.set(true);
     this.api.getProductsByUser(userId).pipe(retry(2)).subscribe({
       next: products => {
-        const certified = products.filter(p => p.isCertifiedSource);
-        const external  = products.filter(p => !p.isCertifiedSource);
-        this.certifiedStockSignal.set(certified);
-        this.externalStockSignal.set(external);
+        if (products.length > 0) {
+          const certified = products.filter(p => p.isCertifiedSource);
+          const external  = products.filter(p => !p.isCertifiedSource);
+          this.certifiedStockSignal.update(cached => this.mergeProducts(cached, certified));
+          this.externalStockSignal.update(cached => this.mergeProducts(cached, external));
+        }
         this.loadingSignal.set(false);
       },
       error: err => {
@@ -89,11 +134,25 @@ export class JewelryStore {
     });
   }
 
+  private mergeProducts(cached: JewelryProduct[], incoming: JewelryProduct[]): JewelryProduct[] {
+    const byProductId = new Map(cached.map(p => [p.productId, p]));
+    incoming.forEach(p => byProductId.set(p.productId, p));
+    return Array.from(byProductId.values());
+  }
+
   private loadCertificates(): void {
     const userId = this.iam.currentUser()?.id;
     if (!userId) return;
     this.api.getCertificatesByUser(userId).pipe(retry(2)).subscribe({
-      next: certs => this.certificatesSignal.set(certs),
+      next: certs => {
+        if (certs.length > 0) {
+          this.certificatesSignal.update(cached => {
+            const byCertId = new Map(cached.map(c => [c.certId, c]));
+            certs.forEach(c => byCertId.set(c.certId, c));
+            return Array.from(byCertId.values());
+          });
+        }
+      },
       error: err => this.errorSignal.set(err?.message ?? 'Error al cargar certificados'),
     });
   }
@@ -308,7 +367,12 @@ export class JewelryStore {
 
     try {
       const registry = JSON.parse(localStorage.getItem('ot_certs') ?? '{}');
-      registry[certId] = { productName: data.name, issuedAt, batchId: data.sourceBatchId };
+      registry[certId] = {
+        productName: data.name,
+        issuedAt,
+        batchId: data.sourceBatchId,
+        points: this.buildTraceabilityPoints(data.sourceBatchId, issuedAt),
+      };
       localStorage.setItem('ot_certs', JSON.stringify(registry));
     } catch { /* ignore storage errors */ }
 
@@ -334,5 +398,22 @@ export class JewelryStore {
     });
 
     return { success: true, certId, productId, productName: data.name };
+  }
+
+  /**
+   * Builds the standard mineral-to-jewelry traceability chain for a freshly
+   * issued certificate, anchored to the certification date. Coordinates follow
+   * the Andes → Lima route used across the OpalTrace verification map.
+   */
+  private buildTraceabilityPoints(batchId: string, issuedAt: string) {
+    const base = new Date(issuedAt).getTime();
+    const day  = 24 * 60 * 60 * 1000;
+    const hash = (n: number) => `0x${(base + n).toString(16).slice(-10)}`;
+    return [
+      { latitude: -13.5328, longitude: -72.4442, eventType: 'MineralExtracted', timestamp: new Date(base - 5 * day).toISOString(), actorName: `Origen minero · ${batchId}`, blockchainTxHash: hash(1) },
+      { latitude: -13.6012, longitude: -72.5110, eventType: 'TransportStarted', timestamp: new Date(base - 4 * day).toISOString(), actorName: 'Cadena de custodia',            blockchainTxHash: hash(2) },
+      { latitude: -12.0800, longitude: -77.0500, eventType: 'BatchReceived',    timestamp: new Date(base - 2 * day).toISOString(), actorName: 'Refinería',                     blockchainTxHash: hash(3) },
+      { latitude: -12.0464, longitude: -77.0300, eventType: 'CertificateIssued', timestamp: issuedAt,                              actorName: 'Joyería',                      blockchainTxHash: hash(4) },
+    ];
   }
 }

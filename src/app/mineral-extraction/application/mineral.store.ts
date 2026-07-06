@@ -1,10 +1,17 @@
-import { Injectable, inject, signal, computed } from '@angular/core';
+import { Injectable, inject, signal, computed, effect } from '@angular/core';
 import { retry } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { MineralApi } from '../infrastructure/mineral-api';
 import { MineralBatch, MineralType, BatchStatus } from '../domain/model/mineral-batch.entity';
 import { AnomalyAlert, AlertType } from '../domain/model/anomaly-alert.entity';
 import { IamStore } from '../../iam/application/iam.store';
+import { LocalPersistence } from '../../shared/infrastructure/local-persistence';
+
+interface MineralBatchProps {
+  id: number; batchId: string; mineral: MineralType; weightKg: number;
+  status: BatchStatus; isBlocked: boolean; gpsLat: number; gpsLon: number;
+  timestamp: string; txHash: string; userId: number; anomalyReason: string | null;
+}
 
 export { MineralBatch, AnomalyAlert };
 export type { MineralType, BatchStatus, AlertType };
@@ -24,9 +31,10 @@ export const WEIGHT_RANGES: Record<MineralType, { min: number; max: number }> = 
 
 @Injectable({ providedIn: 'root' })
 export class MineralStore {
-  private readonly api       = inject(MineralApi);
-  private readonly iam       = inject(IamStore);
-  private readonly translate = inject(TranslateService);
+  private readonly api         = inject(MineralApi);
+  private readonly iam         = inject(IamStore);
+  private readonly translate   = inject(TranslateService);
+  private readonly persistence = inject(LocalPersistence);
 
   private readonly batchesSignal  = signal<MineralBatch[]>([]);
   private readonly alertsSignal   = signal<AnomalyAlert[]>([]);
@@ -44,7 +52,27 @@ export class MineralStore {
   private alertSeq = 4;
 
   constructor() {
+    this.hydrateFromCache();
     this.loadBatches();
+    effect(() => {
+      const props = this.batchesSignal().map(b => this.toProps(b));
+      this.persistence.write<MineralBatchProps>('batches', props);
+    });
+  }
+
+  private toProps(b: MineralBatch): MineralBatchProps {
+    return {
+      id: b.id, batchId: b.batchId, mineral: b.mineral, weightKg: b.weightKg,
+      status: b.status, isBlocked: b.isBlocked, gpsLat: b.gpsLat, gpsLon: b.gpsLon,
+      timestamp: b.timestamp, txHash: b.txHash, userId: b.userId, anomalyReason: b.anomalyReason,
+    };
+  }
+
+  private hydrateFromCache(): void {
+    const cached = this.persistence.read<MineralBatchProps>('batches');
+    if (cached.length > 0) {
+      this.batchesSignal.set(cached.map(p => new MineralBatch(p)));
+    }
   }
 
   private loadBatches(): void {
@@ -53,7 +81,15 @@ export class MineralStore {
     this.loadingSignal.set(true);
     this.api.getBatchesByUser(userId).pipe(retry(2)).subscribe({
       next: batches => {
-        this.batchesSignal.set(batches);
+        // Merge backend batches over the cached snapshot (backend wins on conflict).
+        // An empty backend response never discards locally registered batches.
+        if (batches.length > 0) {
+          this.batchesSignal.update(cached => {
+            const byBatchId = new Map(cached.map(b => [b.batchId, b]));
+            batches.forEach(b => byBatchId.set(b.batchId, b));
+            return Array.from(byBatchId.values());
+          });
+        }
         this.loadingSignal.set(false);
       },
       error: err => {

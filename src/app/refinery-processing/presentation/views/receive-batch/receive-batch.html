@@ -68,9 +68,9 @@
           @if (eligibleBatches().length > 0) {
             <select id="batchSelect" name="batchId" [(ngModel)]="batchId" required>
               <option value="" disabled>{{ 'refinery.batch-transit-placeholder' | translate }}</option>
-              @for (b of eligibleBatches(); track b.id) {
-                <option [value]="b.id">
-                  {{ b.id }} · {{ b.mineral }} · {{ b.weightKg }} kg
+              @for (b of eligibleBatches(); track b.batchId) {
+                <option [value]="b.batchId">
+                  {{ b.batchId }} · {{ b.mineral }} · {{ b.weightKg }} kg
                 </option>
               }
             </select>

@@ -1,10 +1,16 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject, effect } from '@angular/core';
 import { retry } from 'rxjs/operators';
 import { RefineryApi } from '../infrastructure/refinery-api';
 import { RefineryBatch, RefineryBatchStatus } from '../domain/model/refinery-batch.entity';
 import { SubLot, SubLotStatus } from '../domain/model/sublot.entity';
 import { ShrinkageRecord, ShrinkageType } from '../domain/model/shrinkage-record.entity';
 import { MineralStore, MineralType } from '../../mineral-extraction/application/mineral.store';
+import { LocalPersistence } from '../../shared/infrastructure/local-persistence';
+
+interface RefineryBatchProps {
+  id: number; batchId: string; weightKg: number; status: RefineryBatchStatus;
+  receivedAt: string; location: string; mineral: string | null;
+}
 
 export { RefineryBatch, SubLot, ShrinkageRecord };
 export type { RefineryBatchStatus, SubLotStatus, ShrinkageType };
@@ -41,18 +47,47 @@ export class RefineryStore {
   readonly totalReceived = computed(() => this.batchesSignal().length);
   readonly totalSublots = computed(() => this.sublotsSignal().length);
 
+  private readonly persistence = inject(LocalPersistence);
+
   constructor(
     private readonly api: RefineryApi,
     private readonly mineralStore: MineralStore
   ) {
+    this.hydrateFromCache();
     this.loadRefineryBatches();
     this.loadSublots();
     this.loadShrinkageRecords();
+    effect(() => {
+      const props = this.batchesSignal().map(b => this.toProps(b));
+      this.persistence.write<RefineryBatchProps>('refinery-batches', props);
+    });
+  }
+
+  private toProps(b: RefineryBatch): RefineryBatchProps {
+    return {
+      id: b.id, batchId: b.batchId, weightKg: b.weightKg, status: b.status,
+      receivedAt: b.receivedAt, location: b.location, mineral: b.mineral,
+    };
+  }
+
+  private hydrateFromCache(): void {
+    const cached = this.persistence.read<RefineryBatchProps>('refinery-batches');
+    if (cached.length > 0) {
+      this.batchesSignal.set(cached.map(p => new RefineryBatch(p)));
+    }
   }
 
   private loadRefineryBatches(): void {
     this.api.getRefineryBatches().pipe(retry(2)).subscribe({
-      next: batches => this.batchesSignal.set(batches),
+      next: batches => {
+        if (batches.length > 0) {
+          this.batchesSignal.update(cached => {
+            const byBatchId = new Map(cached.map(b => [b.batchId, b]));
+            batches.forEach(b => byBatchId.set(b.batchId, b));
+            return Array.from(byBatchId.values());
+          });
+        }
+      },
       error: err => this.errorSignal.set(err?.message ?? 'Error al cargar lotes de refinería'),
     });
   }
