@@ -37,6 +37,9 @@ export class RegisterBatch implements OnDestroy {
   readonly gpsLon = -77.0428;
   readonly gpsLabel = `${this.gpsLat}, ${this.gpsLon} (Zona Norte Lima)`;
 
+  evidencePhoto: File | null = null;
+  evidencePhotoName = signal<string | null>(null);
+
   isOffline = signal(!navigator.onLine);
   result    = signal<RegisterResult | null>(null);
   submitted = signal(false);
@@ -83,10 +86,19 @@ export class RegisterBatch implements OnDestroy {
     }
   }
 
+  onPhotoChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    this.evidencePhoto = file;
+    this.evidencePhotoName.set(file?.name ?? null);
+  }
+
   onReset(): void {
     this.result.set(null);
     this.submitted.set(false);
     this.weightKg = null;
+    this.evidencePhoto = null;
+    this.evidencePhotoName.set(null);
   }
 
   syncQueue(): void {

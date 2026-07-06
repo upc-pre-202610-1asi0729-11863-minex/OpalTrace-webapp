@@ -300,7 +300,9 @@
     "col-weight": "Peso (kg)",
     "col-timestamp": "Fecha/Hora",
     "col-status": "Estado",
-    "status-synced": "Sincronizado"
+    "status-synced": "Sincronizado",
+    "photo": "Foto de evidencia",
+    "photo-hint": "Opcional: adjunta una fotografía del lote mineral"
   },
   "layout": {
     "upgrade-title": "Actualizar a Platinum",

@@ -299,7 +299,9 @@
     "col-weight": "Weight (kg)",
     "col-timestamp": "Timestamp",
     "col-status": "Status",
-    "status-synced": "Synced"
+    "status-synced": "Synced",
+    "photo": "Evidence photo",
+    "photo-hint": "Optional: attach a photograph of the mineral batch"
   },
   "layout": {
     "upgrade-title": "Upgrade to Platinum",
