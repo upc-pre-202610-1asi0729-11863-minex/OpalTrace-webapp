@@ -13,7 +13,8 @@ import { LanguageSwitcher } from '../../../../shared/presentation/components/lan
 })
 export class ForgotPassword {
   private store = inject(IamStore);
-  sent = signal(false);
+  sent       = signal(false);
+  resetLink  = signal<string | null>(null);
 
   form = new FormGroup({
     email: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.email] }),
@@ -21,6 +22,12 @@ export class ForgotPassword {
 
   submit() {
     if (this.form.invalid) { this.form.markAllAsTouched(); return; }
-    this.store.forgotPassword(this.form.getRawValue().email).subscribe(() => this.sent.set(true));
+    this.store.forgotPassword(this.form.getRawValue().email).subscribe(res => {
+      this.sent.set(true);
+      if (res.resetToken) {
+        const base = window.location.origin;
+        this.resetLink.set(`${base}/auth/reset-password?token=${res.resetToken}`);
+      }
+    });
   }
 }

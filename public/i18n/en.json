@@ -59,6 +59,7 @@
     "forgot-btn": "Send Instructions",
     "forgot-success": "If the email is registered in OpalTrace, you'll receive a recovery link within a few minutes.",
     "forgot-back": "Back to Sign In",
+    "forgot-demo-label": "Demo mode — recovery link (in production this would arrive by email):",
     "register": "Create account",
     "welcome-back": "Welcome back",
     "no-account": "Don't have an account?",

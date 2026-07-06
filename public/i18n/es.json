@@ -60,6 +60,7 @@
     "forgot-btn": "Enviar instrucciones",
     "forgot-success": "Si el correo está registrado en OpalTrace, recibirás un enlace de recuperación en los próximos minutos.",
     "forgot-back": "Volver al inicio de sesión",
+    "forgot-demo-label": "Modo demo — enlace de recuperación (en producción llegaría por correo):",
     "register": "Crear cuenta",
     "welcome-back": "Bienvenido de vuelta",
     "no-account": "¿No tienes cuenta?",
