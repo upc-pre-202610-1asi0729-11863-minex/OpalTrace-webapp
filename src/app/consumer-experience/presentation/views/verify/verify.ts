@@ -71,13 +71,11 @@ export class Verify implements OnInit, OnDestroy {
     this.result.set(null);
     this.eventLogged.set(false);
 
-    setTimeout(() => {
-      const res = this.store.verifyQr(id);
+    this.store.verifyQr(id).subscribe(res => {
       this.result.set(res);
-      this.store.registerVerificationEvent(id);
       this.eventLogged.set(true);
       this.loading.set(false);
-    }, 500);
+    });
   }
 
   reset(): void {

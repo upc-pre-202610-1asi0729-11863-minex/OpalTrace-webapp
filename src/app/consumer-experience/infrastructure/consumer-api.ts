@@ -25,4 +25,12 @@ export class ConsumerApi extends BaseApi {
   verify(certificateId: string, event: VerificationEvent): Observable<VerificationEvent> {
     return this.verificationEventsEndpoint.verify(certificateId, event);
   }
+
+  verifyProduct(certificateId: string): Observable<any> {
+    return this.verificationEventsEndpoint.verifyProduct(certificateId);
+  }
+
+  getTraceabilityMap(certificateId: string): Observable<any[]> {
+    return this.verificationEventsEndpoint.getTraceabilityMap(certificateId);
+  }
 }

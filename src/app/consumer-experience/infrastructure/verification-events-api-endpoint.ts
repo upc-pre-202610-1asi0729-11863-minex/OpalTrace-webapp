@@ -28,4 +28,16 @@ export class VerificationEventsApiEndpoint extends BaseApiEndpoint<
       catchError(this.handleError('Failed to verify certificate'))
     );
   }
+
+  verifyProduct(certificateId: string): Observable<any> {
+    return this.http.post<any>(`${this.endpointUrl}/${certificateId}/verify`, {}).pipe(
+      catchError(this.handleError('Failed to verify product'))
+    );
+  }
+
+  getTraceabilityMap(certificateId: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.endpointUrl}/${certificateId}/traceability-map`).pipe(
+      catchError(this.handleError('Failed to get traceability map'))
+    );
+  }
 }

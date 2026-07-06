@@ -1,5 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { retry } from 'rxjs';
+import { forkJoin, Observable, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 import { ConsumerApi } from '../infrastructure/consumer-api';
 import { ConsumerCertificate } from '../domain/model/consumer-certificate.entity';
 import { VerificationEvent } from '../domain/model/verification-event.entity';
@@ -89,21 +90,7 @@ export class ConsumerStore {
   readonly error           = this.errorSignal.asReadonly();
 
   constructor() {
-    this.loadCertificates();
-  }
-
-  private loadCertificates(): void {
-    this.loadingSignal.set(true);
     this.certificatesSignal.set(MOCK_CERTIFICATES);
-    this.api.getCertificates().pipe(retry(2)).subscribe({
-      next: certs => {
-        this.certificatesSignal.set(certs.length > 0 ? certs : MOCK_CERTIFICATES);
-        this.loadingSignal.set(false);
-      },
-      error: () => {
-        this.loadingSignal.set(false);
-      },
-    });
   }
 
   private readonly EVENT_LABELS: Record<string, string> = {
@@ -114,68 +101,72 @@ export class ConsumerStore {
     CertificateIssued: 'Certificado en Joyería',
   };
 
-  verifyQr(certId: string): VerifyResult {
-    const normalizedId = certId.trim().toUpperCase();
-    const cert = this.certificatesSignal().find(
-      c => c.certId.toUpperCase() === normalizedId
+  verifyQr(certId: string): Observable<VerifyResult> {
+    const id = certId.trim().toUpperCase();
+    const mockCert = MOCK_CERTIFICATES.find(c => c.certId.toUpperCase() === id);
+
+    return forkJoin({
+      verification: this.api.verifyProduct(id),
+      points:       this.api.getTraceabilityMap(id).pipe(catchError(() => of([] as any[]))),
+    }).pipe(
+      map(({ verification, points }) => {
+        const geoPoints: GeoPoint[] = points.length > 0
+          ? points.map((p: any) => ({
+              lat:       p.latitude,
+              lon:       p.longitude,
+              eventType: p.eventType,
+              timestamp: p.timestamp,
+              actor:     p.actorName,
+              txHash:    p.blockchainTxHash,
+            }))
+          : (MOCK_GEO_POINTS[id] ?? []);
+
+        const events = geoPoints.map(p => ({
+          type:      this.EVENT_LABELS[p.eventType] ?? p.eventType,
+          timestamp: p.timestamp,
+          actor:     p.actor ?? '—',
+          txHash:    p.txHash,
+        }));
+
+        if (verification.result === 'NOT_VERIFIABLE') {
+          return {
+            authentic: false,
+            cert: mockCert ? {
+              certId: id, productName: mockCert.productName,
+              certState: mockCert.certState, issuedAt: mockCert.issuedAt,
+              batchId: mockCert.batchId, events,
+            } : undefined,
+            error: verification.failureReason ?? `Certificado "${certId}" no encontrado en el registro OpalTrace.`,
+          } as VerifyResult;
+        }
+
+        return {
+          authentic: true,
+          cert: {
+            certId:      id,
+            productName: mockCert?.productName ?? id,
+            certState:   'CERTIFIED',
+            issuedAt:    mockCert?.issuedAt ?? verification.verifiedAt ?? new Date().toISOString(),
+            batchId:     verification.batchId ?? mockCert?.batchId ?? null,
+            events,
+          },
+        } as VerifyResult;
+      }),
+      catchError(() => of(this.verifyQrFallback(id)))
     );
+  }
 
-    if (!cert) {
-      return {
-        authentic: false,
-        error: `Certificado "${certId}" no encontrado en el registro OpalTrace.`,
-      };
-    }
-
-    const { points } = this.getTraceabilityMap(cert.certId);
+  private verifyQrFallback(id: string): VerifyResult {
+    const cert = MOCK_CERTIFICATES.find(c => c.certId.toUpperCase() === id);
+    if (!cert) return { authentic: false, error: `Certificado "${id}" no encontrado en el registro OpalTrace.` };
+    const points = MOCK_GEO_POINTS[cert.certId] ?? [];
     const events = points.map(p => ({
-      type:      this.EVENT_LABELS[p.eventType] ?? p.eventType,
-      timestamp: p.timestamp,
-      actor:     p.actor ?? '—',
-      txHash:    p.txHash,
+      type: this.EVENT_LABELS[p.eventType] ?? p.eventType,
+      timestamp: p.timestamp, actor: p.actor ?? '—', txHash: p.txHash,
     }));
-
-    if (cert.certState === 'REVOKED') {
-      return {
-        authentic: false,
-        cert: {
-          certId: cert.certId,
-          productName: cert.productName,
-          certState: cert.certState,
-          issuedAt: cert.issuedAt,
-          batchId: cert.batchId,
-          events,
-        },
-        error: 'Este certificado ha sido revocado. El producto no puede ser considerado auténtico.',
-      };
-    }
-
-    if (!cert.signatureValid) {
-      return {
-        authentic: false,
-        cert: {
-          certId: cert.certId,
-          productName: cert.productName,
-          certState: cert.certState,
-          issuedAt: cert.issuedAt,
-          batchId: cert.batchId,
-          events,
-        },
-        error: 'La firma digital del certificado no es válida. Posible adulteración.',
-      };
-    }
-
-    return {
-      authentic: true,
-      cert: {
-        certId: cert.certId,
-        productName: cert.productName,
-        certState: cert.certState,
-        issuedAt: cert.issuedAt,
-        batchId: cert.batchId,
-        events,
-      },
-    };
+    if (cert.certState === 'REVOKED')
+      return { authentic: false, cert: { certId: cert.certId, productName: cert.productName, certState: cert.certState, issuedAt: cert.issuedAt, batchId: cert.batchId, events }, error: 'Este certificado ha sido revocado.' };
+    return { authentic: true, cert: { certId: cert.certId, productName: cert.productName, certState: cert.certState, issuedAt: cert.issuedAt, batchId: cert.batchId, events } };
   }
 
   registerVerificationEvent(certId: string): void {
@@ -211,37 +202,4 @@ export class ConsumerStore {
     });
   }
 
-  getTraceabilityMap(certId: string): { points: GeoPoint[] } {
-    const normalizedId = certId.trim().toUpperCase();
-    const cert = this.certificatesSignal().find(
-      c => c.certId.toUpperCase() === normalizedId
-    );
-
-    if (!cert) {
-      return { points: [] };
-    }
-
-    const storedPoints = MOCK_GEO_POINTS[cert.certId];
-    if (storedPoints) {
-      return { points: storedPoints };
-    }
-
-    // Generate generic geo points based on the certificate data
-    const points: GeoPoint[] = [
-      {
-        lat: -12.0464,
-        lon: -77.0428,
-        eventType: 'MineralExtracted',
-        timestamp: cert.issuedAt,
-      },
-      {
-        lat: -12.0464,
-        lon: -77.0300,
-        eventType: 'CertificateIssued',
-        timestamp: cert.issuedAt,
-      },
-    ];
-
-    return { points };
-  }
 }
