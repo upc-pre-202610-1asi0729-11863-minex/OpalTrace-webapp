@@ -21,7 +21,7 @@ export class MineralApi extends BaseApi {
   getBatchesByUser(userId: number): Observable<MineralBatch[]>        { return this.batchesEndpoint.getByUserId(userId); }
   getBatch(id: number): Observable<MineralBatch>                     { return this.batchesEndpoint.getById(id); }
   getBatchByBatchId(batchId: string): Observable<MineralBatch | null>{ return this.batchesEndpoint.getBatchByBatchId(batchId); }
-  createBatch(batch: MineralBatch): Observable<MineralBatch>         { return this.batchesEndpoint.create(batch); }
+  createBatch(batch: MineralBatch): Observable<MineralBatch>         { return this.batchesEndpoint.registerBatch(batch); }
   updateBatch(batch: MineralBatch): Observable<MineralBatch>         { return this.batchesEndpoint.update(batch, batch.id); }
 
   getAlertsByBatch(batchPk: number): Observable<AnomalyAlert[]>              { return this.alertsEndpoint.getByBatchPk(batchPk); }

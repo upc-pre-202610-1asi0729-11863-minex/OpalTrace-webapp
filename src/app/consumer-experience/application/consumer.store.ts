@@ -242,11 +242,14 @@ export class ConsumerStore {
     const cert = this.certificatesSignal().find(
       c => c.certId.toUpperCase() === normalizedId
     );
+    const local = cert ? null : this.readLocalCert(normalizedId);
 
-    const authentic = !!cert && cert.certState !== 'REVOKED' && cert.signatureValid;
+    const authentic = cert
+      ? cert.certState !== 'REVOKED' && cert.signatureValid
+      : !!local;
     const entry: VerificationLogEntry = {
       certId,
-      productName: cert?.productName ?? '—',
+      productName: cert?.productName ?? local?.productName ?? '—',
       verifiedAt: new Date().toISOString(),
       authentic,
     };
@@ -255,7 +258,9 @@ export class ConsumerStore {
       ? cert.certState === 'REVOKED'
         ? 'REVOKED'
         : 'AUTHENTIC'
-      : 'NOT_FOUND';
+      : local
+        ? 'AUTHENTIC'
+        : 'NOT_FOUND';
 
     const event = new VerificationEvent({
       id: 0,

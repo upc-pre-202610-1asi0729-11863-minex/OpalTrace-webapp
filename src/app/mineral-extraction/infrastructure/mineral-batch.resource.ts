@@ -1,18 +1,20 @@
-﻿import { BaseResource } from '../../shared/infrastructure/base-response';
+import { BaseResource } from '../../shared/infrastructure/base-response';
 
+/** Mirrors the backend MineralBatchResource returned by /mineral-batches. */
 export interface MineralBatchResource extends BaseResource {
   id: number;
   batchId: string;
-  mineral: string;
+  mineralType: string;
   weightKg: number;
+  originLatitude: number;
+  originLongitude: number;
   status: string;
-  isBlocked: boolean;
-  gpsLat: number;
-  gpsLon: number;
-  timestamp: string;
-  txHash: string;
-  userId: number;
-  anomalyReason?: string | null;
+  blocked: boolean;
+  supervisorId: number | null;
+  miningCompanyId: number | null;
+  blockchainTxHash: string | null;
+  parentBatchId: number | null;
+  qrCodeData: string | null;
 }
 
 export interface MineralBatchesResponse {

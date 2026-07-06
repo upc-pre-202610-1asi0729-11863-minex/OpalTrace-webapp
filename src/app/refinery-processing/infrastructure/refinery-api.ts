@@ -5,7 +5,7 @@ import { BaseApi } from '../../shared/infrastructure/base-api';
 import { RefineryBatch } from '../domain/model/refinery-batch.entity';
 import { SubLot } from '../domain/model/sublot.entity';
 import { ShrinkageRecord } from '../domain/model/shrinkage-record.entity';
-import { RefineryBatchesApiEndpoint } from './refinery-batches-api-endpoint';
+import { RefineryBatchesApiEndpoint, ReceiveBatchCommand } from './refinery-batches-api-endpoint';
 import { SublotsApiEndpoint } from './sublots-api-endpoint';
 import { ShrinkageRecordsApiEndpoint } from './shrinkage-records-api-endpoint';
 
@@ -26,8 +26,8 @@ export class RefineryApi extends BaseApi {
     return this.refineryBatchesEndpoint.getAll();
   }
 
-  createRefineryBatch(batch: RefineryBatch): Observable<RefineryBatch> {
-    return this.refineryBatchesEndpoint.create(batch);
+  receiveBatchAtRefinery(batchPk: number, command: ReceiveBatchCommand, location: string): Observable<RefineryBatch> {
+    return this.refineryBatchesEndpoint.receiveBatch(batchPk, command, location);
   }
 
   updateRefineryBatch(batch: RefineryBatch): Observable<RefineryBatch> {

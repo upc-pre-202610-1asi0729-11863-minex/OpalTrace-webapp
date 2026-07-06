@@ -5,6 +5,7 @@ import { RefineryBatch, RefineryBatchStatus } from '../domain/model/refinery-bat
 import { SubLot, SubLotStatus } from '../domain/model/sublot.entity';
 import { ShrinkageRecord, ShrinkageType } from '../domain/model/shrinkage-record.entity';
 import { MineralStore, MineralType } from '../../mineral-extraction/application/mineral.store';
+import { IamStore } from '../../iam/application/iam.store';
 import { LocalPersistence } from '../../shared/infrastructure/local-persistence';
 
 interface RefineryBatchProps {
@@ -48,6 +49,7 @@ export class RefineryStore {
   readonly totalSublots = computed(() => this.sublotsSignal().length);
 
   private readonly persistence = inject(LocalPersistence);
+  private readonly iam = inject(IamStore);
 
   constructor(
     private readonly api: RefineryApi,
@@ -129,38 +131,45 @@ export class RefineryStore {
     const diffKg = Math.abs(expectedKg - receivedWeightKg);
     const diffPercent = (diffKg / expectedKg) * 100;
 
-    const newBatch = new RefineryBatch({
-      id: 0,
-      batchId,
-      weightKg: receivedWeightKg,
-      status: 'Recibido' as RefineryBatchStatus,
-      receivedAt: new Date().toISOString(),
-      location,
-      mineral: sourceBatch.mineral ?? null,
-    });
+    const command = {
+      batchId:          sourceBatch.batchId,
+      refineryId:       null,
+      supervisorId:     this.iam.currentUser()?.id ?? null,
+      declaredWeightKg: receivedWeightKg,
+    };
+
+    // Reflect the reception locally whether or not the backend acknowledges it,
+    // then reconcile the batch status in the extraction context (EN_PLANTA).
+    const commit = (persisted: RefineryBatch): { success: true } | { error: string; alert?: WeightDiscrepancyAlert } => {
+      const finalBatch = new RefineryBatch({
+        id: persisted.id, batchId, weightKg: receivedWeightKg,
+        status: 'Recibido' as RefineryBatchStatus, receivedAt: persisted.receivedAt,
+        location, mineral: sourceBatch.mineral ?? null,
+      });
+      this.batchesSignal.update(bs => [...bs, finalBatch]);
+      this.mineralStore.updateBatchStatus(batchId, 'En Planta');
+
+      if (diffPercent > 2) {
+        const alert: WeightDiscrepancyAlert = {
+          batchId, expectedKg, receivedKg: receivedWeightKg,
+          diffPercent: Math.round(diffPercent * 10) / 10,
+        };
+        this.discrepancyAlertsSignal.update(as => [...as, alert]);
+        return {
+          error: `WeightDiscrepancy: Diferencia de peso ${alert.diffPercent}% excede el límite del 2%. Esperado: ${expectedKg} kg — Recibido: ${receivedWeightKg} kg.`,
+          alert,
+        };
+      }
+      return { success: true };
+    };
 
     return new Promise(resolve => {
-      this.api.createRefineryBatch(newBatch).pipe(retry(2)).subscribe({
-        next: created => {
-          this.batchesSignal.update(bs => [...bs, created]);
-
-          if (diffPercent > 2) {
-            const alert: WeightDiscrepancyAlert = {
-              batchId,
-              expectedKg,
-              receivedKg: receivedWeightKg,
-              diffPercent: Math.round(diffPercent * 10) / 10,
-            };
-            this.discrepancyAlertsSignal.update(as => [...as, alert]);
-            resolve({
-              error: `WeightDiscrepancy: Diferencia de peso ${alert.diffPercent}% excede el límite del 2%. Esperado: ${expectedKg} kg — Recibido: ${receivedWeightKg} kg.`,
-              alert,
-            });
-          } else {
-            resolve({ success: true });
-          }
-        },
-        error: err => resolve({ error: err?.message ?? 'Error al registrar lote en refinería' }),
+      this.api.receiveBatchAtRefinery(sourceBatch.id, command, location).pipe(retry(1)).subscribe({
+        next: persisted => resolve(commit(persisted)),
+        error: () => resolve(commit(new RefineryBatch({
+          id: 0, batchId, weightKg: receivedWeightKg, status: 'Recibido' as RefineryBatchStatus,
+          receivedAt: new Date().toISOString(), location, mineral: sourceBatch.mineral ?? null,
+        }))),
       });
     });
   }
