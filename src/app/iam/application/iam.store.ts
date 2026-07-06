@@ -2,7 +2,6 @@ import { computed, inject, Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, catchError, map, of, switchMap, tap } from 'rxjs';
-import { TranslateService } from '@ngx-translate/core';
 import { environment } from '../../../environments/environment';
 import {
   AuthMockUser,
@@ -37,8 +36,6 @@ interface RegisterConsumerBody {
 
 @Injectable({ providedIn: 'root' })
 export class IamStore {
-  private readonly translate = inject(TranslateService);
-
   private readonly currentUserSignal = signal<AuthMockUser | null>(null);
   private readonly isSignedInSignal  = signal<boolean>(false);
 
@@ -141,9 +138,9 @@ export class IamStore {
       map(() => ({ error: null, lockout: false })),
       catchError(err => {
         const status = err.status as number;
-        if (status === 423) return of({ error: this.translate.instant('auth.lockout'), lockout: true });
-        if (status === 401 || status === 403) return of({ error: this.translate.instant('auth.error-credentials'), lockout: false });
-        return of({ error: this.translate.instant('auth.error-connection'), lockout: false });
+        if (status === 423) return of({ error: 'auth.lockout', lockout: true });
+        if (status === 401 || status === 403) return of({ error: 'auth.error-credentials', lockout: false });
+        return of({ error: 'auth.error-connection', lockout: false });
       })
     );
   }
@@ -181,7 +178,7 @@ export class IamStore {
       }),
       map(() => ({ error: null })),
       catchError(err => {
-        const msg = err?.error?.message ?? this.translate.instant('auth.error-register');
+        const msg = err?.error?.message ?? 'auth.error-register';
         return of({ error: msg });
       })
     );
@@ -189,7 +186,7 @@ export class IamStore {
 
   forgotPassword(email: string): Observable<{ message: string; resetToken: string }> {
     return this.http.post<{ message: string; resetToken: string }>(this.forgotPasswordUrl, { email }).pipe(
-      catchError(() => of({ message: this.translate.instant('auth.error-forgot'), resetToken: '' }))
+      catchError(() => of({ message: 'auth.error-forgot', resetToken: '' }))
     );
   }
 
@@ -204,7 +201,7 @@ export class IamStore {
     return this.http.put(this.changePasswordUrl(userId), { userId, currentPassword, newPassword }).pipe(
       map(() => ({ error: null })),
       catchError(err => {
-        const msg = err?.error?.message ?? this.translate.instant('auth.error-change-password');
+        const msg = err?.error?.message ?? 'auth.error-change-password';
         return of({ error: msg });
       })
     );

@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal, OnInit } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { IamStore } from '../../../application/iam.store';
 import { LanguageSwitcher } from '../../../../shared/presentation/components/language-switcher/language-switcher';
 import type { PlanTier, Segment } from '../../../../shared/infrastructure/auth.mock';
@@ -129,9 +129,10 @@ interface PlanOption { id: PlanTier; nameKey: string; price: number; featureKeys
   styleUrl: './onboarding.css',
 })
 export class Onboarding implements OnInit {
-  private store  = inject(IamStore);
-  private router = inject(Router);
-  private route  = inject(ActivatedRoute);
+  private store     = inject(IamStore);
+  private router    = inject(Router);
+  private route     = inject(ActivatedRoute);
+  private translate = inject(TranslateService);
 
   step            = signal<1 | 2 | 3 | 4>(1);
   selectedProfile = signal<Profile | null>(null);
@@ -425,7 +426,7 @@ export class Onboarding implements OnInit {
       password:    v.password,
     }, this.router).subscribe(result => {
       this.registerLoading.set(false);
-      if (result.error) this.registerError.set(result.error);
+      if (result.error) this.registerError.set(this.translate.instant(result.error));
     });
   }
 

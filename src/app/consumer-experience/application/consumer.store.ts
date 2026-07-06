@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { forkJoin, Observable, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, map, retry } from 'rxjs/operators';
 import { ConsumerApi } from '../infrastructure/consumer-api';
 import { ConsumerCertificate } from '../domain/model/consumer-certificate.entity';
 import { VerificationEvent } from '../domain/model/verification-event.entity';
@@ -167,6 +167,21 @@ export class ConsumerStore {
     if (cert.certState === 'REVOKED')
       return { authentic: false, cert: { certId: cert.certId, productName: cert.productName, certState: cert.certState, issuedAt: cert.issuedAt, batchId: cert.batchId, events }, error: 'Este certificado ha sido revocado.' };
     return { authentic: true, cert: { certId: cert.certId, productName: cert.productName, certState: cert.certState, issuedAt: cert.issuedAt, batchId: cert.batchId, events } };
+  }
+
+  getTraceabilityPoints(certId: string): Observable<GeoPoint[]> {
+    const id = certId.trim().toUpperCase();
+    return this.api.getTraceabilityMap(id).pipe(
+      map((items: any[]) => items.map(p => ({
+        lat:       p.latitude,
+        lon:       p.longitude,
+        eventType: p.eventType,
+        timestamp: p.timestamp,
+        actor:     p.actorName,
+        txHash:    p.blockchainTxHash,
+      }))),
+      catchError(() => of(MOCK_GEO_POINTS[id] ?? []))
+    );
   }
 
   registerVerificationEvent(certId: string): void {

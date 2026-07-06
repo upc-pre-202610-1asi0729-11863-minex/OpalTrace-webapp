@@ -1,6 +1,6 @@
 export const environment = {
   production: false,
-  platformProviderApiBaseUrl: 'https://opaltrace-platform-production.up.railway.app/api/v1',
+  platformProviderApiBaseUrl: 'http://localhost:8080/api/v1',
 
   // OpalTrace — IAM
   platformProviderSignInEndpointPath: '/authentication/sign-in',

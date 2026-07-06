@@ -3,7 +3,7 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { Router, RouterLink } from '@angular/router';
 import { IamStore } from '../../../application/iam.store';
 import { LanguageSwitcher } from '../../../../shared/presentation/components/language-switcher/language-switcher';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-login',
@@ -12,8 +12,9 @@ import { TranslatePipe } from '@ngx-translate/core';
   styleUrl: './login.css',
 })
 export class Login {
-  private store = inject(IamStore);
-  private router = inject(Router);
+  private store     = inject(IamStore);
+  private router    = inject(Router);
+  private translate = inject(TranslateService);
 
   errorMsg  = signal<string | null>(null);
   isLockout = signal(false);
@@ -34,9 +35,9 @@ export class Login {
       this.loading.set(false);
       if (result.lockout) {
         this.isLockout.set(true);
-        this.errorMsg.set(result.error);
+        this.errorMsg.set(this.translate.instant(result.error!));
       } else if (result.error) {
-        this.errorMsg.set(result.error);
+        this.errorMsg.set(this.translate.instant(result.error));
       }
     });
   }

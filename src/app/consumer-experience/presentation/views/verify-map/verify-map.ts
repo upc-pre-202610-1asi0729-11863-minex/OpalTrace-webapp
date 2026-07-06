@@ -35,8 +35,7 @@ export class VerifyMap implements OnInit {
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('certificateId') ?? '';
     this.certificateId.set(id);
-    const { points } = this.store.getTraceabilityMap(id);
-    this.points.set(points);
+    this.store.getTraceabilityPoints(id).subscribe(pts => this.points.set(pts));
     this.store.registerVerificationEvent(id);
   }
 
