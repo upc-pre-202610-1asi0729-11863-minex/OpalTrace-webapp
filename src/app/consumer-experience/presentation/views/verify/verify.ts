@@ -4,6 +4,7 @@ import { RouterLink, ActivatedRoute } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import { ConsumerStore, VerifyResult } from '../../../application/consumer.store';
+import jsQR from 'jsqr';
 
 @Component({
   selector: 'app-verify',
@@ -16,7 +17,8 @@ export class Verify implements OnInit, OnDestroy {
   private translate = inject(TranslateService);
   private route     = inject(ActivatedRoute);
 
-  @ViewChild('videoEl') videoEl?: ElementRef<HTMLVideoElement>;
+  @ViewChild('videoEl')      videoEl?:      ElementRef<HTMLVideoElement>;
+  @ViewChild('qrFileInput')  qrFileInput?:  ElementRef<HTMLInputElement>;
 
   certInput   = signal('');
   result      = signal<VerifyResult | null>(null);
@@ -26,6 +28,7 @@ export class Verify implements OnInit, OnDestroy {
   cameraActive  = signal(false);
   cameraError   = signal<string | null>(null);
   cameraLoading = signal(false);
+  qrReading     = signal(false);
 
   private stream: MediaStream | null = null;
 
@@ -43,7 +46,6 @@ export class Verify implements OnInit, OnDestroy {
     try {
       this.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
       this.cameraActive.set(true);
-      // Attach stream to video element after Angular renders it
       setTimeout(() => {
         const video = this.videoEl?.nativeElement;
         if (video) {
@@ -62,6 +64,44 @@ export class Verify implements OnInit, OnDestroy {
     this.stream?.getTracks().forEach(t => t.stop());
     this.stream = null;
     this.cameraActive.set(false);
+  }
+
+  triggerQrUpload(): void {
+    this.qrFileInput?.nativeElement.click();
+  }
+
+  onQrFileSelected(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    this.cameraError.set(null);
+    this.qrReading.set(true);
+
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width  = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d')!;
+      ctx.drawImage(img, 0, 0);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const code = jsQR(imageData.data, imageData.width, imageData.height);
+      URL.revokeObjectURL(url);
+      this.qrReading.set(false);
+      if (code?.data) {
+        this.certInput.set(code.data);
+        this.verify();
+      } else {
+        this.cameraError.set(this.translate.instant('verify.qr-not-found'));
+      }
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      this.qrReading.set(false);
+      this.cameraError.set(this.translate.instant('verify.qr-not-found'));
+    };
+    img.src = url;
+    (event.target as HTMLInputElement).value = '';
   }
 
   verify(): void {
