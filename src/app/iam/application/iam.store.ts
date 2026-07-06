@@ -123,7 +123,7 @@ export class IamStore {
       role:        res.role,
       planTier:    res.planTier,
       companyName: res.companyName ?? '',
-      ruc:         '',
+      ruc:         stored?.email === res.email ? (stored.ruc ?? '') : '',
       firstName:   parts[0] ?? '',
       lastName:    parts.slice(1).join(' ') ?? '',
       fullName:    res.fullName,
@@ -179,7 +179,9 @@ export class IamStore {
       switchMap(() => this.http.post<SignInResponse>(this.signInUrl, { email: data.email, password })),
       tap(res => {
         const user = this.mapResponse(res);
-        user.gender = data.gender ?? 'M';
+        user.gender   = data.gender ?? 'M';
+        user.ruc      = data.ruc ?? user.ruc;
+        user.planTier = data.planTier;
         this.persist(user);
         if (data.billing) {
           localStorage.setItem(`ot_billing_${user.id}`, JSON.stringify([data.billing]));
