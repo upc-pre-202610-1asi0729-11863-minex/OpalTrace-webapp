@@ -19,7 +19,6 @@
       <!-- ── LEFT: Personal + Security ── -->
       <div class="pp-col pp-col-left">
 
-        <!-- Personal info -->
         <h3 class="pp-section-title">
           <i class="ti ti-user"></i>
           {{ isEnterprise() ? ('my-profile.company' | translate) : ('my-profile.personal' | translate) }}
@@ -28,7 +27,6 @@
         <form [formGroup]="profileForm" (ngSubmit)="saveProfile()" class="pp-form">
 
           @if (isEnterprise()) {
-            <!-- Company Name readonly -->
             <div class="pp-field">
               <label class="pp-label">{{ 'my-profile.company-name' | translate }}</label>
               <div class="pp-locked-wrap">
@@ -36,7 +34,6 @@
                 <i class="ti ti-lock pp-lock-icon" [title]="'my-profile.locked-hint' | translate"></i>
               </div>
             </div>
-            <!-- RUC readonly -->
             <div class="pp-field">
               <label class="pp-label">{{ 'my-profile.ruc' | translate }}</label>
               <div class="pp-locked-wrap">
@@ -45,7 +42,6 @@
               </div>
             </div>
           } @else {
-            <!-- First name -->
             <div class="pp-field-row">
               <div class="pp-field">
                 <label class="pp-label">{{ 'my-profile.first-name' | translate }}</label>
@@ -58,18 +54,16 @@
                        formControlName="lastName" />
               </div>
             </div>
-            <!-- Gender -->
             <div class="pp-field">
               <label class="pp-label">{{ 'my-profile.gender' | translate }}</label>
               <select class="pp-input" formControlName="gender">
                 <option [ngValue]="null" disabled hidden>{{ 'onboarding.gender-placeholder' | translate }}</option>
-                <option value="M">{{ 'onboarding.gender-m' | translate }}</option>
-                <option value="F">{{ 'onboarding.gender-f' | translate }}</option>
+                <option [ngValue]="'M'">{{ 'onboarding.gender-m' | translate }}</option>
+                <option [ngValue]="'F'">{{ 'onboarding.gender-f' | translate }}</option>
               </select>
             </div>
           }
 
-          <!-- Email (all segments) -->
           <div class="pp-field">
             <label class="pp-label">{{ 'my-profile.email' | translate }}</label>
             <input class="pp-input" [class.pp-invalid]="fieldErr(profileForm, 'email')"
@@ -92,10 +86,8 @@
           </button>
         </form>
 
-        <!-- Divider -->
         <div class="pp-divider"></div>
 
-        <!-- Security / change password -->
         <h3 class="pp-section-title">
           <i class="ti ti-shield-lock"></i> {{ 'my-profile.security' | translate }}
         </h3>
@@ -157,81 +149,108 @@
           <i class="ti ti-credit-card"></i> {{ 'my-profile.billing' | translate }}
         </h3>
 
-        <!-- Card preview -->
-        @if (savedBilling() && savedBilling()!.cardNumber) {
-          <div class="pp-card-preview">
-            <div class="pp-card-brand">{{ cardBrand(savedBilling()!.cardNumber) }}</div>
-            <div class="pp-card-number">{{ maskedNumber(savedBilling()!.cardNumber) }}</div>
-            <div class="pp-card-bottom">
-              <span class="pp-card-holder">{{ savedBilling()!.cardHolder || '–' }}</span>
-              <span class="pp-card-expiry">
-                {{ savedBilling()!.expiryMonth }}/{{ savedBilling()!.expiryYear }}
-              </span>
-            </div>
-          </div>
-        } @else {
+        <!-- Saved methods list -->
+        @if (savedBillings().length === 0) {
           <div class="pp-no-card">
             <i class="ti ti-credit-card-off"></i>
             <span>{{ 'my-profile.no-card' | translate }}</span>
           </div>
+        } @else {
+          <div class="pp-cards-list">
+            @for (card of savedBillings(); track $index) {
+              <div class="pp-card-preview">
+                <div class="pp-card-top-row">
+                  <span class="pp-card-brand">{{ cardBrand(card.cardNumber) }}</span>
+                  <button type="button" class="pp-card-delete"
+                          [disabled]="savedBillings().length <= 1"
+                          [title]="'my-profile.delete-card' | translate"
+                          (click)="removeBilling($index)">
+                    <i class="ti ti-trash"></i>
+                  </button>
+                </div>
+                <div class="pp-card-number">{{ maskedNumber(card.cardNumber) }}</div>
+                <div class="pp-card-bottom">
+                  <span class="pp-card-holder">{{ card.cardHolder || '–' }}</span>
+                  <span class="pp-card-expiry">{{ card.expiryMonth }}/{{ card.expiryYear }}</span>
+                </div>
+              </div>
+            }
+          </div>
         }
 
-        <!-- Billing form -->
-        <form [formGroup]="billingForm" (ngSubmit)="saveBilling()" class="pp-form" style="margin-top:16px;">
-          <div class="pp-field">
-            <label class="pp-label">{{ 'my-profile.card-holder' | translate }}</label>
-            <input class="pp-input" formControlName="cardHolder"
-                   placeholder="JUAN PÉREZ" style="text-transform:uppercase;" />
+        @if (billingSaved()) {
+          <div class="pp-alert pp-alert-ok" style="margin-top:10px;">
+            <i class="ti ti-check"></i> {{ 'my-profile.billing-saved' | translate }}
           </div>
-          <div class="pp-field">
-            <label class="pp-label">{{ 'my-profile.card-number' | translate }}</label>
-            <input class="pp-input" formControlName="cardNumber"
-                   (input)="formatCardInput($event)"
-                   placeholder="1234 5678 9012 3456"
-                   maxlength="19" inputmode="numeric" />
-          </div>
-          <div class="pp-field-row">
-            <div class="pp-field">
-              <label class="pp-label">{{ 'my-profile.expiry-month' | translate }}</label>
-              <select class="pp-input" formControlName="expiryMonth">
-                <option value="">MM</option>
-                @for (m of months; track m) {
-                  <option [value]="m">{{ m }}</option>
-                }
-              </select>
-            </div>
-            <div class="pp-field">
-              <label class="pp-label">{{ 'my-profile.expiry-year' | translate }}</label>
-              <select class="pp-input" formControlName="expiryYear">
-                <option value="">AAAA</option>
-                @for (y of years; track y) {
-                  <option [value]="y">{{ y }}</option>
-                }
-              </select>
-            </div>
-            <div class="pp-field" style="max-width:90px;">
-              <label class="pp-label">{{ 'my-profile.cvv' | translate }}</label>
-              <div class="pp-pw-wrap">
-                <input class="pp-input" formControlName="cvv"
-                       [type]="showCvv() ? 'text' : 'password'"
-                       placeholder="•••" maxlength="4" inputmode="numeric" />
-                <button type="button" class="pp-pw-eye" (click)="showCvv.set(!showCvv())">
-                  <i class="ti" [class.ti-eye]="!showCvv()" [class.ti-eye-off]="showCvv()"></i>
-                </button>
-              </div>
-            </div>
-          </div>
+        }
 
-          @if (billingSaved()) {
-            <div class="pp-alert pp-alert-ok">
-              <i class="ti ti-check"></i> {{ 'my-profile.billing-saved' | translate }}
-            </div>
-          }
-
-          <button type="submit" class="ot-btn ot-btn-primary pp-save-btn">
-            <i class="ti ti-device-floppy"></i> {{ 'my-profile.save-billing' | translate }}
+        <!-- Add method toggle -->
+        @if (!showAddForm()) {
+          <button type="button" class="ot-btn pp-add-method-btn" (click)="showAddForm.set(true)">
+            <i class="ti ti-plus"></i> {{ 'my-profile.add-billing' | translate }}
           </button>
-        </form>
+        } @else {
+          <!-- New card form -->
+          <div class="pp-add-form">
+            <div class="pp-add-form-header">
+              <span class="pp-section-title" style="margin:0;">
+                <i class="ti ti-credit-card"></i> {{ 'my-profile.new-card' | translate }}
+              </span>
+              <button type="button" class="pp-close-btn" style="font-size:16px;" (click)="showAddForm.set(false)">
+                <i class="ti ti-x"></i>
+              </button>
+            </div>
+
+            <form [formGroup]="billingForm" (ngSubmit)="addBilling()" class="pp-form">
+              <div class="pp-field">
+                <label class="pp-label">{{ 'my-profile.card-holder' | translate }}</label>
+                <input class="pp-input" formControlName="cardHolder"
+                       placeholder="JUAN PÉREZ" style="text-transform:uppercase;" />
+              </div>
+              <div class="pp-field">
+                <label class="pp-label">{{ 'my-profile.card-number' | translate }}</label>
+                <input class="pp-input" formControlName="cardNumber"
+                       (input)="formatCardInput($event)"
+                       placeholder="1234 5678 9012 3456"
+                       maxlength="19" inputmode="numeric" />
+              </div>
+              <div class="pp-field-row">
+                <div class="pp-field">
+                  <label class="pp-label">{{ 'my-profile.expiry-month' | translate }}</label>
+                  <select class="pp-input" formControlName="expiryMonth">
+                    <option value="">MM</option>
+                    @for (m of months; track m) {
+                      <option [value]="m">{{ m }}</option>
+                    }
+                  </select>
+                </div>
+                <div class="pp-field">
+                  <label class="pp-label">{{ 'my-profile.expiry-year' | translate }}</label>
+                  <select class="pp-input" formControlName="expiryYear">
+                    <option value="">AAAA</option>
+                    @for (y of years; track y) {
+                      <option [value]="y">{{ y }}</option>
+                    }
+                  </select>
+                </div>
+                <div class="pp-field" style="max-width:90px;">
+                  <label class="pp-label">{{ 'my-profile.cvv' | translate }}</label>
+                  <div class="pp-pw-wrap">
+                    <input class="pp-input" formControlName="cvv"
+                           [type]="showCvv() ? 'text' : 'password'"
+                           placeholder="•••" maxlength="4" inputmode="numeric" />
+                    <button type="button" class="pp-pw-eye" (click)="showCvv.set(!showCvv())">
+                      <i class="ti" [class.ti-eye]="!showCvv()" [class.ti-eye-off]="showCvv()"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <button type="submit" class="ot-btn ot-btn-primary pp-save-btn">
+                <i class="ti ti-device-floppy"></i> {{ 'my-profile.save-billing' | translate }}
+              </button>
+            </form>
+          </div>
+        }
       </div>
 
     </div>

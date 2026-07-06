@@ -245,6 +245,67 @@
 }
 .pp-card-holder { text-transform: uppercase; }
 
+.pp-cards-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.pp-card-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.pp-card-delete {
+  background: rgba(255,255,255,0.15);
+  border: none;
+  color: rgba(255,255,255,0.7);
+  cursor: pointer;
+  border-radius: 6px;
+  padding: 4px 7px;
+  font-size: 14px;
+  transition: background 0.15s, color 0.15s;
+}
+.pp-card-delete:hover:not(:disabled) {
+  background: rgba(255,80,80,0.3);
+  color: #fff;
+}
+.pp-card-delete:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.pp-add-method-btn {
+  width: 100%;
+  justify-content: center;
+  margin-top: 12px;
+  border: 1px dashed #ccc;
+  color: #555;
+}
+.pp-add-method-btn:hover {
+  border-color: #3F816C;
+  color: #3F816C;
+  background: #f0f8f5;
+}
+
+.pp-add-form {
+  margin-top: 12px;
+  background: #f9f9f7;
+  border: 1px solid #e8e8e4;
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.pp-add-form-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
 .pp-no-card {
   display: flex;
   align-items: center;

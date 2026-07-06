@@ -1,6 +1,5 @@
 import { Component, computed, inject, OnInit, output, signal } from '@angular/core';
-import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { FormsModule } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { IamStore } from '../../../../iam/application/iam.store';
 
@@ -49,14 +48,15 @@ export class ProfilePanel implements OnInit {
   showCvv       = signal(false);
   showNewPw     = signal(false);
   showCurPw     = signal(false);
+  showAddForm   = signal(false);
 
-  readonly savedBilling = signal<BillingData | null>(null);
+  readonly savedBillings = signal<BillingData[]>([]);
 
   readonly months = ['01','02','03','04','05','06','07','08','09','10','11','12'];
   readonly years  = Array.from({ length: 12 }, (_, i) => String(2026 + i));
 
   ngOnInit(): void {
-    const u    = this.store.currentUser();
+    const u     = this.store.currentUser();
     const isEnt = this.isEnterprise();
 
     this.profileForm = this.fb.group({
@@ -74,24 +74,33 @@ export class ProfilePanel implements OnInit {
       confirmPassword: ['', [Validators.required]],
     }, { validators: matchPasswords });
 
-    const billing = this.loadBilling();
-    this.savedBilling.set(billing);
     this.billingForm = this.fb.group({
-      cardHolder:  [billing?.cardHolder  ?? ''],
-      cardNumber:  [billing?.cardNumber  ?? ''],
-      expiryMonth: [billing?.expiryMonth ?? ''],
-      expiryYear:  [billing?.expiryYear  ?? ''],
-      cvv:         [billing?.cvv         ?? ''],
+      cardHolder:  [''],
+      cardNumber:  [''],
+      expiryMonth: [''],
+      expiryYear:  [''],
+      cvv:         [''],
     });
+
+    this.savedBillings.set(this.loadBillings());
   }
 
-  private loadBilling(): BillingData | null {
+  private loadBillings(): BillingData[] {
     const uid = this.store.currentUser()?.id;
-    if (!uid) return null;
+    if (!uid) return [];
     try {
       const raw = localStorage.getItem(`ot_billing_${uid}`);
-      return raw ? JSON.parse(raw) : null;
-    } catch { return null; }
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      // backward compat: old format was a single object, new is array
+      return Array.isArray(parsed) ? parsed : [parsed];
+    } catch { return []; }
+  }
+
+  private saveBillingsToStorage(billings: BillingData[]): void {
+    const uid = this.store.currentUser()?.id;
+    if (!uid) return;
+    localStorage.setItem(`ot_billing_${uid}`, JSON.stringify(billings));
   }
 
   cardBrand(num: string): string {
@@ -147,14 +156,22 @@ export class ProfilePanel implements OnInit {
     });
   }
 
-  saveBilling(): void {
-    const uid = this.store.currentUser()?.id;
-    if (!uid) return;
+  addBilling(): void {
     const v = this.billingForm.getRawValue() as BillingData;
-    localStorage.setItem(`ot_billing_${uid}`, JSON.stringify(v));
-    this.savedBilling.set(v);
+    const updated = [...this.savedBillings(), v];
+    this.saveBillingsToStorage(updated);
+    this.savedBillings.set(updated);
+    this.billingForm.reset();
+    this.showAddForm.set(false);
     this.billingSaved.set(true);
     setTimeout(() => this.billingSaved.set(false), 3000);
+  }
+
+  removeBilling(index: number): void {
+    if (this.savedBillings().length <= 1) return;
+    const updated = this.savedBillings().filter((_, i) => i !== index);
+    this.saveBillingsToStorage(updated);
+    this.savedBillings.set(updated);
   }
 
   fieldErr(form: FormGroup, field: string): boolean {
