@@ -17,6 +17,7 @@ const dashboardRouter     = () => import('./shared/presentation/views/dashboard-
 const verify              = () => import('./consumer-experience/presentation/views/verify/verify').then(m => m.Verify);
 const verifyMap           = () => import('./consumer-experience/presentation/views/verify-map/verify-map').then(m => m.VerifyMap);
 const consumerHistory     = () => import('./consumer-experience/presentation/views/consumer-history/consumer-history').then(m => m.ConsumerHistory);
+const myJewelry           = () => import('./consumer-experience/presentation/views/my-jewelry/my-jewelry').then(m => m.MyJewelry);
 const registerCompany     = () => import('./consumer-experience/presentation/views/register-company/register-company').then(m => m.RegisterCompany);
 
 const baseTitle = 'OpalTrace';
@@ -39,6 +40,7 @@ export const routes: Routes = [
       { path: 'verify',                    loadComponent: verify,          title: `${baseTitle} — Verificar` },
       { path: 'verify/:certificateId',     loadComponent: verify,          title: `${baseTitle} — Verificar autenticidad` },
       { path: 'verify/:certificateId/map', loadComponent: verifyMap,       title: `${baseTitle} — Mapa de trazabilidad` },
+      { path: 'consumer/my-jewelry',        loadComponent: myJewelry,         title: `${baseTitle} — Mis joyas` },
       { path: 'consumer/history',           loadComponent: consumerHistory,   title: `${baseTitle} — Historial` },
       { path: 'consumer/register-company', loadComponent: registerCompany,   title: `${baseTitle} — Registrar Empresa` },
 

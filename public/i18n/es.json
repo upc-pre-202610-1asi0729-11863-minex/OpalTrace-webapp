@@ -24,6 +24,7 @@
     "certify": "Certificar",
     "verify": "Verificar joya",
     "my-jewelry": "Mis joyas",
+    "history": "Historial",
     "register-company": "Registrar Empresa",
     "sync": "Sincronización",
     "batches": "Mis lotes",
@@ -353,6 +354,18 @@
     "new-btn": "Nueva Verificación",
     "retry-btn": "Intentar con otro código",
     "camera-denied": "No se pudo acceder a la cámara. Verifica los permisos en tu navegador."
+  },
+  "my-jewelry": {
+    "title": "Mis joyas",
+    "sub": "Joyas cuya autenticidad has verificado con OpalTrace",
+    "empty-title": "Aún no tienes joyas verificadas",
+    "empty-sub": "Cuando verifiques la autenticidad de una joya, aparecerá aquí como parte de tu colección.",
+    "certified-by": "Certificado por",
+    "verified-on": "Verificado el",
+    "cert-id": "Certificado",
+    "view-trace": "Ver trazabilidad",
+    "badge-certified": "Certificado",
+    "badge-revoked": "Revocado"
   },
   "history": {
     "title": "Historial de Verificaciones",

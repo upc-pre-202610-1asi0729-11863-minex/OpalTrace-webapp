@@ -24,6 +24,7 @@
     "certify": "Certify",
     "verify": "Verify Jewelry",
     "my-jewelry": "My Jewelry",
+    "history": "History",
     "register-company": "Register Company",
     "sync": "Synchronization",
     "certificate-origin": "Origin Certificate",
@@ -352,6 +353,18 @@
     "new-btn": "New Verification",
     "retry-btn": "Try another code",
     "camera-denied": "Could not access the camera. Please check your browser permissions."
+  },
+  "my-jewelry": {
+    "title": "My Jewelry",
+    "sub": "Jewelry pieces whose authenticity you have verified with OpalTrace",
+    "empty-title": "No verified jewelry yet",
+    "empty-sub": "When you verify the authenticity of a jewelry piece, it will appear here as part of your collection.",
+    "certified-by": "Certified by",
+    "verified-on": "Verified on",
+    "cert-id": "Certificate",
+    "view-trace": "View traceability",
+    "badge-certified": "Certified",
+    "badge-revoked": "Revoked"
   },
   "history": {
     "title": "Verification History",

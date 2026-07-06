@@ -1,0 +1,63 @@
+<section>
+  <h1 class="page-title">{{ 'my-jewelry.title' | translate }}</h1>
+  <p class="page-sub">{{ 'my-jewelry.sub' | translate }}</p>
+
+  @if (pieces().length === 0) {
+    <div class="mj-empty">
+      <i class="ti ti-diamond-off mj-empty-icon"></i>
+      <h3 class="mj-empty-title">{{ 'my-jewelry.empty-title' | translate }}</h3>
+      <p class="mj-empty-sub">{{ 'my-jewelry.empty-sub' | translate }}</p>
+      <a routerLink="/verify" class="ot-btn ot-btn-primary">
+        <i class="ti ti-scan"></i> {{ 'nav.verify' | translate }}
+      </a>
+    </div>
+  } @else {
+    <div class="mj-grid">
+      @for (piece of pieces(); track piece.certId) {
+        <div class="mj-card">
+          <div class="mj-card-header">
+            <div class="mj-icon-wrap">
+              <i class="ti ti-diamond"></i>
+            </div>
+            @if (piece.certState === 'CERTIFIED') {
+              <span class="badge badge-green mj-badge">
+                <i class="ti ti-shield-check"></i> {{ 'my-jewelry.badge-certified' | translate }}
+              </span>
+            } @else {
+              <span class="badge badge-red mj-badge">
+                <i class="ti ti-shield-x"></i> {{ 'my-jewelry.badge-revoked' | translate }}
+              </span>
+            }
+          </div>
+
+          <h3 class="mj-card-name">{{ piece.productName }}</h3>
+
+          @if (piece.jewelerName) {
+            <div class="mj-card-row">
+              <i class="ti ti-building-store"></i>
+              <span><strong>{{ 'my-jewelry.certified-by' | translate }}:</strong> {{ piece.jewelerName }}</span>
+            </div>
+          }
+
+          <div class="mj-card-row">
+            <i class="ti ti-certificate"></i>
+            <span><strong>{{ 'my-jewelry.cert-id' | translate }}:</strong>
+              <code class="mj-code">{{ piece.certId }}</code>
+            </span>
+          </div>
+
+          <div class="mj-card-row">
+            <i class="ti ti-calendar-check"></i>
+            <span><strong>{{ 'my-jewelry.verified-on' | translate }}:</strong>
+              {{ piece.verifiedAt | date:'dd/MM/yyyy' }}
+            </span>
+          </div>
+
+          <a [routerLink]="['/verify', piece.certId]" class="ot-btn ot-btn-sm mj-btn-trace">
+            <i class="ti ti-route"></i> {{ 'my-jewelry.view-trace' | translate }}
+          </a>
+        </div>
+      }
+    </div>
+  }
+</section>

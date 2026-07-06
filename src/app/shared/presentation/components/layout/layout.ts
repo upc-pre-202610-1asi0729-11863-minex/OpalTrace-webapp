@@ -102,7 +102,8 @@ export class Layout {
         label: 'nav.VERIFICACIÓN',
         items: [
           { icon: 'ti-scan',    label: 'nav.verify',     route: '/verify' },
-          { icon: 'ti-heart',   label: 'nav.my-jewelry', route: '/consumer/history' },
+          { icon: 'ti-diamond', label: 'nav.my-jewelry', route: '/consumer/my-jewelry' },
+          { icon: 'ti-history', label: 'nav.history',    route: '/consumer/history' },
         ],
       },
       {
