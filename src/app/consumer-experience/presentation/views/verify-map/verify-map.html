@@ -7,21 +7,11 @@
   </div>
   <p class="page-sub">Recorrido geográfico del producto · Certificado: <code>{{ certificateId() }}</code></p>
 
-  <!-- Map placeholder -->
+  <!-- Interactive traceability map (Leaflet / OpenStreetMap) -->
   <div class="ot-card" style="margin-bottom:24px;">
     <div class="ot-card-title"><i class="ti ti-map"></i> Mapa Interactivo</div>
-    <div class="map-placeholder">
-      <i class="ti ti-map-2" style="font-size:48px;color:#ccc;display:block;margin-bottom:12px;"></i>
-      <p style="color:#aaa;font-size:13px;">Mapa interactivo — integración con Google Maps / Leaflet</p>
-      <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:12px;">
-        @for (marker of markers(); track marker.point.txHash) {
-          <span style="font-size:11px;padding:4px 8px;background:#f0f0f0;border-radius:12px;">
-            <i class="ti {{ marker.icon }}"></i> {{ marker.label }}
-            ({{ marker.point.lat | number:'1.2-4' }}, {{ marker.point.lon | number:'1.2-4' }})
-          </span>
-        }
-      </div>
-    </div>
+    <div #mapEl class="route-map" role="img" aria-label="Mapa de trazabilidad del producto"
+         style="height:360px;width:100%;border-radius:8px;overflow:hidden;z-index:0;"></div>
   </div>
 
   <!-- Timeline with markers -->

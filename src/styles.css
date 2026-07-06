@@ -12,6 +12,17 @@
 
 * { box-sizing: border-box; }
 
+/* Leaflet needs content-box sizing and unconstrained tile images; the global
+   box-sizing/reset rules above otherwise scatter the map tiles. */
+.leaflet-container,
+.leaflet-container * {
+  box-sizing: content-box;
+}
+.leaflet-container img {
+  max-width: none !important;
+  max-height: none !important;
+}
+
 html, body {
   height: 100%;
   margin: 0;

@@ -1,6 +1,7 @@
-import { Component, inject, signal, computed, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, signal, computed, effect, ElementRef, ViewChild, AfterViewInit, OnInit, OnDestroy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslateService, TranslatePipe } from '@ngx-translate/core';
+import * as L from 'leaflet';
 import { CustodyStore } from '../../../application/custody.store';
 import { LocationUpdateRecord as GpsPoint } from '../../../domain/model/location-update.entity';
 import { MineralStore, BatchStatus } from '../../../../mineral-extraction/application/mineral.store';
@@ -28,10 +29,22 @@ interface DeviceReading {
   imports: [FormsModule, TranslatePipe],
   templateUrl: './location-update.html',
 })
-export class LocationUpdate implements OnInit, OnDestroy {
+export class LocationUpdate implements OnInit, AfterViewInit, OnDestroy {
   private custodyStore = inject(CustodyStore);
   private mineralStore = inject(MineralStore);
   private translate    = inject(TranslateService);
+
+  @ViewChild('mapEl') mapEl?: ElementRef<HTMLDivElement>;
+  private map?: L.Map;
+  private routeLayer?: L.LayerGroup;
+
+  constructor() {
+    // Redraw the route whenever a new GPS point is registered for the batch.
+    effect(() => {
+      const points = this.gpsPoints();
+      if (this.map) this.renderRoute(points);
+    });
+  }
 
   /** Form fields */
   selectedBatchId = '';
@@ -52,8 +65,54 @@ export class LocationUpdate implements OnInit, OnDestroy {
     if (first) this.selectedBatchId = first.batchId;
   }
 
+  ngAfterViewInit(): void {
+    if (!this.mapEl) return;
+    // Peru-centered default view until the first reading arrives.
+    this.map = L.map(this.mapEl.nativeElement, { attributionControl: true })
+      .setView([-12.0464, -77.0428], 6);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 18,
+      attribution: '© OpenStreetMap',
+    }).addTo(this.map);
+    this.routeLayer = L.layerGroup().addTo(this.map);
+    // Ensure correct sizing once the container is laid out.
+    setTimeout(() => {
+      this.map?.invalidateSize();
+      this.renderRoute(this.gpsPoints());
+    }, 150);
+  }
+
   ngOnDestroy(): void {
     this.stopDevice();
+    this.map?.remove();
+  }
+
+  private renderRoute(points: GpsPoint[]): void {
+    if (!this.map || !this.routeLayer) return;
+    this.routeLayer.clearLayers();
+    if (points.length === 0) return;
+
+    const sorted = [...points].sort(
+      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    );
+    const latlngs = sorted.map(p => [p.lat, p.lon] as L.LatLngTuple);
+
+    L.polyline(latlngs, { color: '#3F816C', weight: 3, opacity: 0.8 }).addTo(this.routeLayer);
+
+    sorted.forEach((p, i) => {
+      const isLast = i === sorted.length - 1;
+      L.circleMarker([p.lat, p.lon], {
+        radius: isLast ? 8 : 5,
+        color: '#fff',
+        weight: 2,
+        fillColor: isLast ? '#e8a020' : '#3F816C',
+        fillOpacity: 1,
+      })
+        .bindPopup(`${this.formatCoords(p)}<br>${this.formatTime(p.timestamp)}`)
+        .addTo(this.routeLayer!);
+    });
+
+    this.map.fitBounds(L.latLngBounds(latlngs).pad(0.3), { maxZoom: 14 });
   }
 
   startDevice(): void {
