@@ -1,6 +1,6 @@
 import { Component, inject, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { RefineryStore, SubLot } from '../../../application/refinery.store';
 import { IamStore } from '../../../../iam/application/iam.store';
@@ -25,9 +25,10 @@ interface SplitResult {
   templateUrl: './split-batch.html',
 })
 export class SplitBatch {
-  private store    = inject(RefineryStore);
-  private iamStore = inject(IamStore);
-  private route    = inject(ActivatedRoute);
+  private store     = inject(RefineryStore);
+  private iamStore  = inject(IamStore);
+  private route     = inject(ActivatedRoute);
+  private translate = inject(TranslateService);
 
   readonly isPlatinum = this.iamStore.isPlatinum;
   readonly sublots    = computed(() => this.store.sublots());
@@ -87,19 +88,19 @@ export class SplitBatch {
 
   onConfirm(): void {
     if (!this.selectedBatchId) {
-      this.result.set({ success: false, error: 'Selecciona un lote padre.' });
+      this.result.set({ success: false, error: this.translate.instant('refinery.err-select-parent') });
       return;
     }
 
     const invalidWeights = this.sublotWeights.filter(w => w <= 0);
     if (invalidWeights.length > 0) {
-      this.result.set({ success: false, error: 'Todos los sublotes deben tener un peso mayor a 0.' });
+      this.result.set({ success: false, error: this.translate.instant('refinery.err-sublot-weight') });
       return;
     }
 
     this.store.splitBatch(this.selectedBatchId, this.sublotWeights).then(outcome => {
-      if ('error' in outcome) {
-        this.result.set({ success: false, error: outcome.error });
+      if ('errorKey' in outcome) {
+        this.result.set({ success: false, error: this.translate.instant(outcome.errorKey, outcome.errorParams) });
       } else {
         this.result.set({ success: true, sublots: outcome.sublots });
       }

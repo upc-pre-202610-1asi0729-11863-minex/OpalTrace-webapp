@@ -31,6 +31,10 @@ export interface VerifyResult {
     batchId: string | null;
     events: Array<{ type: string; timestamp: string; actor: string; txHash?: string }>;
   };
+  /** i18n key + params emitted by the store; the view resolves them into `error`. */
+  errorKey?: string;
+  errorParams?: Record<string, string>;
+  /** Human-readable message resolved in the presentation layer. */
   error?: string;
 }
 
@@ -153,7 +157,8 @@ export class ConsumerStore {
           }
           return {
             authentic: false,
-            error: verification.failureReason ?? `Certificado "${certId}" no encontrado en el registro OpalTrace.`,
+            errorKey: 'verify.err-not-found',
+            errorParams: { certId },
           } as VerifyResult;
         }
 
@@ -182,7 +187,7 @@ export class ConsumerStore {
         timestamp: p.timestamp, actor: p.actor ?? '—', txHash: p.txHash,
       }));
       if (cert.certState === 'REVOKED')
-        return { authentic: false, cert: { certId: cert.certId, productName: cert.productName, certState: cert.certState, issuedAt: cert.issuedAt, batchId: cert.batchId, events }, error: 'Este certificado ha sido revocado.' };
+        return { authentic: false, cert: { certId: cert.certId, productName: cert.productName, certState: cert.certState, issuedAt: cert.issuedAt, batchId: cert.batchId, events }, errorKey: 'verify.err-revoked' };
       return { authentic: true, cert: { certId: cert.certId, productName: cert.productName, certState: cert.certState, issuedAt: cert.issuedAt, batchId: cert.batchId, events } };
     }
     const local = this.readLocalCert(id);
@@ -192,7 +197,7 @@ export class ConsumerStore {
         cert: { certId: id, productName: local.productName, certState: 'CERTIFIED', issuedAt: local.issuedAt, batchId: local.batchId ?? null, events: this.eventsFromPoints(local.points) },
       };
     }
-    return { authentic: false, error: `Certificado "${id}" no encontrado en el registro OpalTrace.` };
+    return { authentic: false, errorKey: 'verify.err-not-found', errorParams: { certId: id } };
   }
 
   private readLocalCert(id: string): { productName: string; issuedAt: string; batchId: string | null; points?: any[] } | null {

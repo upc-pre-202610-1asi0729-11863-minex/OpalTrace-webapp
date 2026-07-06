@@ -1,5 +1,6 @@
 import { Component, inject, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { TranslateService } from '@ngx-translate/core';
 import { CustodyStore } from '../../../application/custody.store';
 import { LocationUpdateRecord as GpsPoint } from '../../../domain/model/location-update.entity';
 import { MineralStore, BatchStatus } from '../../../../mineral-extraction/application/mineral.store';
@@ -23,6 +24,7 @@ interface UpdateResult {
 export class LocationUpdate {
   private custodyStore = inject(CustodyStore);
   private mineralStore = inject(MineralStore);
+  private translate    = inject(TranslateService);
 
   /** Form fields */
   selectedBatchId = 'OT-2025-0013';
@@ -69,15 +71,15 @@ export class LocationUpdate {
 
   onSubmit(): void {
     if (this.latInput == null || this.lonInput == null) {
-      this.result.set({ success: false, error: 'Ingresa latitud y longitud.' });
+      this.result.set({ success: false, error: this.translate.instant('custody.err-latlon-required') });
       return;
     }
     if (this.latInput < -90 || this.latInput > 90) {
-      this.result.set({ success: false, error: 'Latitud debe estar entre -90 y 90.' });
+      this.result.set({ success: false, error: this.translate.instant('custody.err-lat-range') });
       return;
     }
     if (this.lonInput < -180 || this.lonInput > 180) {
-      this.result.set({ success: false, error: 'Longitud debe estar entre -180 y 180.' });
+      this.result.set({ success: false, error: this.translate.instant('custody.err-lon-range') });
       return;
     }
 
@@ -86,8 +88,8 @@ export class LocationUpdate {
       this.latInput,
       this.lonInput
     ).then(outcome => {
-      if ('error' in outcome) {
-        this.result.set({ success: false, error: outcome.error });
+      if ('errorKey' in outcome) {
+        this.result.set({ success: false, error: this.translate.instant(outcome.errorKey, outcome.errorParams) });
       } else {
         this.result.set({ success: true });
         this.latInput = null;

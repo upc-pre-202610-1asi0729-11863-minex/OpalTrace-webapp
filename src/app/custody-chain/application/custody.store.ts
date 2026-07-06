@@ -55,10 +55,10 @@ export class CustodyStore {
     batchId: string,
     lat: number,
     lon: number
-  ): Promise<{ success: true } | { error: string }> {
+  ): Promise<{ success: true } | { errorKey: string; errorParams?: Record<string, string> }> {
     const batch = this.mineralStore.batches().find(b => b.batchId === batchId);
     if (!batch) {
-      return Promise.resolve({ error: `Lote ${batchId} no encontrado` });
+      return Promise.resolve({ errorKey: 'custody.err-not-found', errorParams: { batchId } });
     }
 
     const newRecord = new LocationUpdateRecord({
@@ -76,8 +76,8 @@ export class CustodyStore {
           this.locationUpdatesSignal.update(records => [...records, created]);
           resolve({ success: true });
         },
-        error: err => {
-          resolve({ error: err?.message ?? 'Error al registrar actualización de ubicación' });
+        error: () => {
+          resolve({ errorKey: 'custody.err-location-failed' });
         },
       });
     });

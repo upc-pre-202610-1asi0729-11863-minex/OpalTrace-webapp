@@ -27,6 +27,14 @@ export type ReceiveBatchOutcome =
   | { success: true }
   | { errorKey: string; errorParams?: Record<string, string>; alert?: WeightDiscrepancyAlert };
 
+export type SplitBatchOutcome =
+  | { success: true; sublots: SubLot[] }
+  | { errorKey: string; errorParams?: Record<string, string> };
+
+export type ShrinkageOutcome =
+  | { success: true }
+  | { errorKey: string; errorParams?: Record<string, string> };
+
 /** Efficiency shrinkage targets per mineral type (max acceptable %) */
 export const WEIGHT_TARGETS: Record<MineralType, number> = {
   Oro:   2.5,
@@ -183,16 +191,20 @@ export class RefineryStore {
   splitBatch(
     parentId: string,
     sublotWeights: number[]
-  ): Promise<{ success: true; sublots: SubLot[] } | { error: string }> {
+  ): Promise<SplitBatchOutcome> {
     const parent = this.batchesSignal().find(b => b.batchId === parentId);
     if (!parent) {
-      return Promise.resolve({ error: `Lote padre ${parentId} no encontrado en refinería.` });
+      return Promise.resolve({ errorKey: 'refinery.err-parent-not-found', errorParams: { parentId } });
     }
 
     const totalSplit = sublotWeights.reduce((sum, w) => sum + w, 0);
     if (Math.abs(totalSplit - parent.weightKg) > 0.01) {
       return Promise.resolve({
-        error: `La suma de sublotes (${totalSplit} kg) debe ser igual al peso del lote padre (${parent.weightKg} kg). Diferencia: ${Math.abs(totalSplit - parent.weightKg).toFixed(2)} kg.`,
+        errorKey: 'refinery.err-sum-mismatch',
+        errorParams: {
+          sum: String(totalSplit), parent: String(parent.weightKg),
+          diff: Math.abs(totalSplit - parent.weightKg).toFixed(2),
+        },
       });
     }
 
@@ -236,7 +248,7 @@ export class RefineryStore {
             );
             resolve({ success: true, sublots: created });
           },
-          error: err => resolve({ error: err?.message ?? 'Error al actualizar lote padre' }),
+          error: () => resolve({ errorKey: 'refinery.err-update-parent' }),
         });
       };
 
@@ -247,10 +259,10 @@ export class RefineryStore {
             pending--;
             if (pending === 0) finish();
           },
-          error: err => {
+          error: () => {
             if (!hasError) {
               hasError = true;
-              resolve({ error: err?.message ?? 'Error al crear sublote' });
+              resolve({ errorKey: 'refinery.err-create-sublot' });
             }
           },
         });
@@ -262,14 +274,14 @@ export class RefineryStore {
     batchId: string,
     percentage: number,
     type: ShrinkageType
-  ): Promise<{ success: true } | { error: string }> {
+  ): Promise<ShrinkageOutcome> {
     if (percentage < 0 || percentage > 100) {
-      return Promise.resolve({ error: 'El porcentaje de merma debe estar entre 0 y 100.' });
+      return Promise.resolve({ errorKey: 'refinery.err-shrinkage-range' });
     }
 
     const batch = this.batchesSignal().find(b => b.batchId === batchId);
     if (!batch) {
-      return Promise.resolve({ error: `Lote ${batchId} no encontrado en refinería.` });
+      return Promise.resolve({ errorKey: 'refinery.err-batch-not-found', errorParams: { batchId } });
     }
 
     const record = new ShrinkageRecord({
@@ -286,7 +298,7 @@ export class RefineryStore {
           this.shrinkageSignal.update(rs => [...rs, created]);
           resolve({ success: true });
         },
-        error: err => resolve({ error: err?.message ?? 'Error al registrar merma' }),
+        error: () => resolve({ errorKey: 'refinery.err-register-shrinkage' }),
       });
     });
   }

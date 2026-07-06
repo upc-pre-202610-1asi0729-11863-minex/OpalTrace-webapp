@@ -1,6 +1,6 @@
 import { Component, inject, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { RefineryStore, ShrinkageRecord, WEIGHT_TARGETS } from '../../../application/refinery.store';
 import { IamStore } from '../../../../iam/application/iam.store';
 
@@ -22,8 +22,9 @@ interface ShrinkageResult {
   templateUrl: './shrinkage.html',
 })
 export class Shrinkage {
-  private store    = inject(RefineryStore);
-  private iamStore = inject(IamStore);
+  private store     = inject(RefineryStore);
+  private iamStore  = inject(IamStore);
+  private translate = inject(TranslateService);
 
   readonly isPlatinum = this.iamStore.isPlatinum;
 
@@ -70,8 +71,8 @@ export class Shrinkage {
     const target = this.targetPercent();
     if (target == null) return '';
     return this.isWithinTarget()
-      ? `Dentro del objetivo (≤ ${target}%)`
-      : `Excede el objetivo (límite: ${target}%)`;
+      ? this.translate.instant('refinery.efficiency-within', { target })
+      : this.translate.instant('refinery.efficiency-exceeds', { target });
   });
 
   /** CSS class for the efficiency indicator */
@@ -93,11 +94,11 @@ export class Shrinkage {
 
   onSubmit(): void {
     if (!this.selectedBatchId) {
-      this.result.set({ success: false, error: 'Selecciona un lote.' });
+      this.result.set({ success: false, error: this.translate.instant('refinery.err-select-lot') });
       return;
     }
     if (this.percentage == null || this.percentage < 0 || this.percentage > 100) {
-      this.result.set({ success: false, error: 'El porcentaje debe estar entre 0 y 100.' });
+      this.result.set({ success: false, error: this.translate.instant('refinery.err-shrinkage-range') });
       return;
     }
 
@@ -106,8 +107,8 @@ export class Shrinkage {
       this.percentage,
       this.shrinkageType
     ).then(outcome => {
-      if ('error' in outcome) {
-        this.result.set({ success: false, error: outcome.error });
+      if ('errorKey' in outcome) {
+        this.result.set({ success: false, error: this.translate.instant(outcome.errorKey, outcome.errorParams) });
       } else {
         this.result.set({ success: true });
         this.submitted.set(true);
