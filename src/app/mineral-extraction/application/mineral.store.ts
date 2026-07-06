@@ -193,4 +193,17 @@ export class MineralStore {
       q.map(r => ({ ...r, status: 'SYNCED' as const }))
     );
   }
+
+  updateBatchStatus(batchId: string, status: BatchStatus): void {
+    this.batchesSignal.update(bs =>
+      bs.map(b => {
+        if (b.batchId !== batchId) return b;
+        return new MineralBatch({
+          id: b.id, batchId: b.batchId, mineral: b.mineral, weightKg: b.weightKg,
+          status, isBlocked: b.isBlocked, gpsLat: b.gpsLat, gpsLon: b.gpsLon,
+          timestamp: b.timestamp, txHash: b.txHash, userId: b.userId,
+        });
+      })
+    );
+  }
 }

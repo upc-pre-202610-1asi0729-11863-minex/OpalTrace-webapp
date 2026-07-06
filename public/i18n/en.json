@@ -659,8 +659,10 @@
     "btn-clear": "Clear",
     "err-not-found": "Batch {{ batchId }} not found.",
     "err-not-in-transit": "Batch {{ batchId }} is not in transit. Current status: {{ status }}",
+    "err-not-in-origin": "Batch {{ batchId }} cannot be accepted. Current status: {{ statusKey }}. Only batches in 'En Origen' state can be accepted.",
+    "err-blocked": "Batch {{ batchId }} is blocked due to an active anomaly. Resolve the anomaly before accepting custody.",
     "conditions-title": "Custody Conditions",
-    "cond-1": "The batch must be IN_TRANSIT to be accepted.",
+    "cond-1": "The batch must be in 'En Origen' state to start transport.",
     "cond-2": "By accepting, the batch becomes your responsibility.",
     "cond-3": "The event is recorded immutably on the blockchain.",
     "cond-4": "An accepted custody transfer cannot be reversed."

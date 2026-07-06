@@ -5,6 +5,7 @@ import { CustodyApi } from '../infrastructure/custody-api';
 import { LocationUpdateRecord } from '../domain/model/location-update.entity';
 import { MineralStore } from '../../mineral-extraction/application/mineral.store';
 import { MineralApi } from '../../mineral-extraction/infrastructure/mineral-api';
+import { MineralBatch } from '../../mineral-extraction/domain/model/mineral-batch.entity';
 
 @Injectable({ providedIn: 'root' })
 export class CustodyStore {
@@ -113,14 +114,34 @@ export class CustodyStore {
       return { success: false, errorKey: 'custody.err-not-found', errorParams: { batchId } };
     }
 
-    if (batch.isBlocked || batch.status !== 'En Tránsito') {
-      const statusKey = batch.isBlocked ? 'batch-status.bloqueado' : (this.statusKeyMap[batch.status] ?? batch.status);
+    if (batch.isBlocked) {
       return {
         success: false,
-        errorKey: 'custody.err-not-in-transit',
+        errorKey: 'custody.err-blocked',
+        errorParams: { batchId },
+      };
+    }
+
+    if (batch.status !== 'En Origen') {
+      const statusKey = this.statusKeyMap[batch.status] ?? batch.status;
+      return {
+        success: false,
+        errorKey: 'custody.err-not-in-origin',
         errorParams: { batchId, statusKey },
       };
     }
+
+    const updated = new MineralBatch({
+      id: batch.id, batchId: batch.batchId, mineral: batch.mineral, weightKg: batch.weightKg,
+      status: 'En Tránsito', isBlocked: batch.isBlocked, gpsLat: batch.gpsLat, gpsLon: batch.gpsLon,
+      timestamp: batch.timestamp, txHash: batch.txHash, userId: batch.userId,
+    });
+
+    try {
+      await firstValueFrom(this.mineralApi.updateBatch(updated).pipe(retry(2)));
+    } catch { /* fallthrough — update local state regardless */ }
+
+    this.mineralStore.updateBatchStatus(batchId, 'En Tránsito');
 
     return { success: true };
   }

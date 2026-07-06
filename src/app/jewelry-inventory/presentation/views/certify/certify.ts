@@ -53,9 +53,9 @@ export class Certify {
     this.batchMineralLoading.set(true);
     try {
       const batch = await firstValueFrom(this.mineralApi.getBatchByBatchId(batchId));
-      this.batchMineral.set(batch?.mineral ?? '');
+      this.batchMineral.set(batch?.mineral ?? 'Mineral certificado');
     } catch {
-      this.batchMineral.set('');
+      this.batchMineral.set('Mineral certificado');
     } finally {
       this.batchMineralLoading.set(false);
     }

@@ -98,7 +98,16 @@ export class JewelryStore {
     });
   }
 
+  private static readonly BATCH_ID_FORMAT = /^OT-\d{4}-\d{4}$/;
+
   receiveMaterial(batchId: string): { success: boolean; error?: string } {
+    if (!JewelryStore.BATCH_ID_FORMAT.test(batchId.trim())) {
+      return {
+        success: false,
+        error: 'Formato de ID inválido. Use OT-AAAA-NNNN (ej. OT-2026-0001).',
+      };
+    }
+
     // Simulate traceability validation — in a real app the events come from the backend
     const simulatedPresentTypes: TraceabilityEventType[] = [
       'MineralExtracted', 'TransportStarted', 'LocationUpdated', 'BatchReceived',

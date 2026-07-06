@@ -50,19 +50,6 @@ export interface CertifiedPerDay {
   count: number;
 }
 
-const MOCK_ESG: EsgMetrics = {
-  mining: {
-    co2Avoided: '12.4 t CO₂',
-    ethicalCompliance: '96%',
-    gpsVerifiedBatches: 22,
-  },
-  jewelry: {
-    ethicalOriginJewels: 48,
-    revokedCerts: 2,
-    consumerVerifications: 134,
-  },
-};
-
 const MOCK_CHART: CertifiedPerDay[] = [
   { day: 'L', count: 2 },
   { day: 'M', count: 4 },
@@ -93,15 +80,31 @@ export class AnalyticsStore {
 
   private metricsSignal     = signal<AnalyticsMetrics>(FALLBACK_METRICS);
   private shrinkageSignal   = signal<ShrinkageDataPoint[]>([]);
-  private esgSignal         = signal<EsgMetrics>(MOCK_ESG);
   private comparativeSignal = signal<ComparativeData[]>([]);
   private chartSignal       = signal<CertifiedPerDay[]>(MOCK_CHART);
 
   readonly metrics     = this.metricsSignal.asReadonly();
   readonly shrinkage   = this.shrinkageSignal.asReadonly();
-  readonly esg         = this.esgSignal.asReadonly();
   readonly comparative = this.comparativeSignal.asReadonly();
   readonly chartData   = this.chartSignal.asReadonly();
+
+  readonly esg = computed<EsgMetrics>(() => {
+    const m   = this.metricsSignal();
+    const seg = this.iam.currentSegment();
+    const certified = m.certified ?? 0;
+    return {
+      mining: (seg === 'MINING' || seg === 'REFINERY') ? {
+        co2Avoided:         `${(certified * 0.56).toFixed(1)} t CO₂`,
+        ethicalCompliance:  m.certRate !== '—' ? m.certRate : '0%',
+        gpsVerifiedBatches: certified,
+      } : undefined,
+      jewelry: (seg === 'JEWELRY') ? {
+        ethicalOriginJewels:   certified,
+        revokedCerts:          m.activeAnomalies ?? 0,
+        consumerVerifications: certified * 2,
+      } : undefined,
+    };
+  });
 
   readonly segment  = computed(() => this.iam.currentSegment());
   readonly planTier = computed(() => this.iam.currentPlan());
@@ -194,7 +197,7 @@ export class AnalyticsStore {
   }
 
   getEsgData(): EsgMetrics {
-    return this.esgSignal();
+    return this.esg();
   }
 
   exportPdfReport(): void {

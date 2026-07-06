@@ -660,8 +660,10 @@
     "btn-clear": "Limpiar",
     "err-not-found": "Lote {{ batchId }} no encontrado.",
     "err-not-in-transit": "El lote {{ batchId }} no está en tránsito. Estado actual: {{ status }}",
+    "err-not-in-origin": "El lote {{ batchId }} no puede aceptarse. Estado actual: {{ statusKey }}. Solo se pueden aceptar lotes en estado 'En Origen'.",
+    "err-blocked": "El lote {{ batchId }} está bloqueado por una anomalía activa. Resuelva la anomalía antes de aceptar custodia.",
     "conditions-title": "Condiciones de Custodia",
-    "cond-1": "El lote debe estar en estado EN_TRÁNSITO para ser aceptado.",
+    "cond-1": "El lote debe estar en estado 'En Origen' para iniciar el transporte.",
     "cond-2": "Al aceptar, el lote queda bajo tu responsabilidad.",
     "cond-3": "El evento queda registrado de forma inmutable en la blockchain.",
     "cond-4": "No se puede revertir una transferencia de custodia aceptada."
