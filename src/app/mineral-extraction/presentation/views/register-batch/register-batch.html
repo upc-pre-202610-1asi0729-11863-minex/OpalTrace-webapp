@@ -57,7 +57,7 @@
               <td>{{ rec.weightKg }}</td>
               <td style="font-size:11px;">{{ rec.timestamp | date:'dd/MM HH:mm' }}</td>
               <td>
-                @if (rec.status === 'Pendiente') {
+                @if (rec.status === 'PENDING') {
                   <span class="badge badge-amber">{{ 'common.pending' | translate }}</span>
                 } @else {
                   <span class="badge badge-green">{{ 'register-batch.status-synced' | translate }}</span>

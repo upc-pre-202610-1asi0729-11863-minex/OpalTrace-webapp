@@ -12,7 +12,7 @@ export type { MineralType, BatchStatus, AlertType };
 export interface OfflineRecord {
   id: string;
   timestamp: string;
-  status: 'Pendiente' | 'Sincronizado';
+  status: 'PENDING' | 'SYNCED';
   mineral: MineralType;
   weightKg: number;
 }
@@ -39,7 +39,7 @@ export class MineralStore {
   readonly loading      = this.loadingSignal.asReadonly();
   readonly error        = this.errorSignal.asReadonly();
   readonly offlineQueue = this.offlineSignal.asReadonly();
-  readonly pendingCount = computed(() => this.offlineSignal().filter(r => r.status === 'Pendiente').length);
+  readonly pendingCount = computed(() => this.offlineSignal().filter(r => r.status === 'PENDING').length);
 
   private alertSeq = 4;
 
@@ -180,7 +180,7 @@ export class MineralStore {
     const record: OfflineRecord = {
       id,
       timestamp: new Date().toISOString(),
-      status: 'Pendiente',
+      status: 'PENDING',
       mineral,
       weightKg,
     };
@@ -190,7 +190,7 @@ export class MineralStore {
 
   syncOfflineQueue(): void {
     this.offlineSignal.update(q =>
-      q.map(r => ({ ...r, status: 'Sincronizado' as const }))
+      q.map(r => ({ ...r, status: 'SYNCED' as const }))
     );
   }
 }
