@@ -80,7 +80,10 @@ export class ReceiveMaterial implements OnDestroy {
     this.showTrace.set(false);
     setTimeout(() => {
       const res = this.store.receiveMaterial(this.batchId().trim());
-      this.result.set(res);
+      this.result.set({
+        success: res.success,
+        error: res.errorKey ? this.translate.instant(res.errorKey, res.errorParams) : undefined,
+      });
       this.loading.set(false);
     }, 600);
   }

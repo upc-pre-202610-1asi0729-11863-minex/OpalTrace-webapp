@@ -41,7 +41,6 @@ export class Certify {
     this.productName().trim().length > 0 &&
     this.productType().length > 0 &&
     this.sourceBatchId().length > 0 &&
-    this.batchMineral().length > 0 &&
     Number(this.weightG()) > 0
   );
 
@@ -53,9 +52,9 @@ export class Certify {
     this.batchMineralLoading.set(true);
     try {
       const batch = await firstValueFrom(this.mineralApi.getBatchByBatchId(batchId));
-      this.batchMineral.set(batch?.mineral ?? 'Mineral certificado');
+      this.batchMineral.set(batch?.mineral ?? '');
     } catch {
-      this.batchMineral.set('Mineral certificado');
+      this.batchMineral.set('');
     } finally {
       this.batchMineralLoading.set(false);
     }

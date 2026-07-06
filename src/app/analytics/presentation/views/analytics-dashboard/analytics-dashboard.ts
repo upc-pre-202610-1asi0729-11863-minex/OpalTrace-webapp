@@ -6,11 +6,6 @@ export type Period = 'DAY' | 'WEEK' | 'MONTH' | 'YEAR';
 
 interface ChartPoint { day: string; count: number; }
 
-const DAY_COUNTS   = [0,0,0,0,0,1,2,4,6,5,3,4,7,5,4,3,5,6,4,3,2,1,1,0];
-const WEEK_COUNTS  = [2, 4, 1, 3, 5, 3, 1];
-const MONTH_COUNTS = [8, 11, 7, 14, 5];
-const YEAR_COUNTS  = [18, 22, 15, 30, 28, 25, 20, 18, 24, 30, 26, 22];
-
 @Component({
   selector: 'app-analytics-dashboard',
   standalone: true,
@@ -26,30 +21,53 @@ export class AnalyticsDashboard {
   readonly periods: Period[] = ['DAY', 'WEEK', 'MONTH', 'YEAR'];
   selectedPeriod = signal<Period>('WEEK');
 
+  /** Certification chart bucketed from the user's real certification dates. */
   readonly computedChartData = computed<ChartPoint[]>(() => {
     const period = this.selectedPeriod();
     const days   = (this.translate.instant('analytics.days-abbr') as string).split(',');
     const months = (this.translate.instant('analytics.months-abbr') as string).split(',');
     const now    = new Date();
-    const curMonth = months[now.getMonth()] ?? months[0];
+    const dates  = this.store.certifiedDates()
+      .map(d => new Date(d))
+      .filter(d => !isNaN(d.getTime()));
 
     if (period === 'DAY') {
-      return DAY_COUNTS.map((count, i) => ({ day: `${String(i).padStart(2, '0')}h`, count }));
+      const counts = new Array(24).fill(0);
+      dates.filter(d => this.sameDay(d, now)).forEach(d => counts[d.getHours()]++);
+      return counts.map((count, i) => ({ day: `${String(i).padStart(2, '0')}h`, count }));
     }
     if (period === 'WEEK') {
-      return WEEK_COUNTS.map((count, i) => ({ day: days[i] ?? '', count }));
+      const counts = new Array(7).fill(0);
+      dates.filter(d => this.sameWeek(d, now)).forEach(d => counts[(d.getDay() + 6) % 7]++);
+      return counts.map((count, i) => ({ day: days[i] ?? '', count }));
     }
     if (period === 'MONTH') {
-      return MONTH_COUNTS.map((count, i) => {
-        const startDay = i * 7 + 1;
-        return { day: `${startDay} ${curMonth}`, count };
-      });
+      const counts = new Array(5).fill(0);
+      dates.filter(d => d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth())
+        .forEach(d => counts[Math.min(4, Math.floor((d.getDate() - 1) / 7))]++);
+      return counts.map((count, i) => ({ day: `${i * 7 + 1} ${months[now.getMonth()] ?? ''}`, count }));
     }
-    return YEAR_COUNTS.map((count, i) => ({
+    const counts = new Array(12).fill(0);
+    dates.filter(d => d.getFullYear() === now.getFullYear()).forEach(d => counts[d.getMonth()]++);
+    return counts.map((count, i) => ({
       day: `${months[i] ?? ''} '${String(now.getFullYear()).slice(-2)}`,
       count,
     }));
   });
+
+  private sameDay(a: Date, b: Date): boolean {
+    return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+  }
+
+  private sameWeek(a: Date, b: Date): boolean {
+    const startOfWeek = new Date(b);
+    const day = (b.getDay() + 6) % 7;
+    startOfWeek.setDate(b.getDate() - day);
+    startOfWeek.setHours(0, 0, 0, 0);
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 7);
+    return a >= startOfWeek && a < endOfWeek;
+  }
 
   readonly maxChartVal = computed(() =>
     Math.max(...this.computedChartData().map(d => d.count), 1)

@@ -21,20 +21,6 @@ interface JewelryCertificateProps {
 export type { CertState, TraceabilityEvent };
 export { JewelryProduct };
 
-export type TraceabilityEventType =
-  | 'MineralExtracted'
-  | 'TransportStarted'
-  | 'LocationUpdated'
-  | 'BatchReceived'
-  | 'AuthenticityVerified';
-
-const REQUIRED_EVENTS: TraceabilityEventType[] = [
-  'MineralExtracted',
-  'TransportStarted',
-  'LocationUpdated',
-  'BatchReceived',
-];
-
 
 @Injectable({ providedIn: 'root' })
 export class JewelryStore {
@@ -159,34 +145,16 @@ export class JewelryStore {
 
   private static readonly BATCH_ID_FORMAT = /^OT-\d{4}-\d{4}$/;
 
-  receiveMaterial(batchId: string): { success: boolean; error?: string } {
+  receiveMaterial(batchId: string): { success: boolean; errorKey?: string; errorParams?: Record<string, string> } {
     const normalizedId = batchId.trim();
 
     if (!JewelryStore.BATCH_ID_FORMAT.test(normalizedId)) {
-      return {
-        success: false,
-        error: 'Formato de ID inválido. Use OT-AAAA-NNNN (ej. OT-2026-0001).',
-      };
+      return { success: false, errorKey: 'receive.err-format' };
     }
 
     const alreadyReceived = this.certifiedStockSignal().some(p => p.batchId === normalizedId);
     if (alreadyReceived) {
-      return {
-        success: false,
-        error: `El lote ${normalizedId} ya fue recibido. No puede recibirse más de una vez.`,
-      };
-    }
-
-    // Simulate traceability validation — in a real app the events come from the backend
-    const simulatedPresentTypes: TraceabilityEventType[] = [
-      'MineralExtracted', 'TransportStarted', 'LocationUpdated', 'BatchReceived',
-    ];
-    const missing = REQUIRED_EVENTS.filter(t => !simulatedPresentTypes.includes(t));
-    if (missing.length > 0) {
-      return {
-        success: false,
-        error: `Trazabilidad incompleta. Faltan eventos: ${missing.join(', ')}`,
-      };
+      return { success: false, errorKey: 'receive.err-duplicate', errorParams: { batchId: normalizedId } };
     }
 
     const newProduct = new JewelryProduct({

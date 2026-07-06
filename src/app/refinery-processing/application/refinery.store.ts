@@ -23,6 +23,10 @@ export interface WeightDiscrepancyAlert {
   diffPercent: number;
 }
 
+export type ReceiveBatchOutcome =
+  | { success: true }
+  | { errorKey: string; errorParams?: Record<string, string>; alert?: WeightDiscrepancyAlert };
+
 /** Efficiency shrinkage targets per mineral type (max acceptable %) */
 export const WEIGHT_TARGETS: Record<MineralType, number> = {
   Oro:   2.5,
@@ -112,18 +116,17 @@ export class RefineryStore {
     batchId: string,
     receivedWeightKg: number,
     location = 'Refinería'
-  ): Promise<{ success: true } | { error: string; alert?: WeightDiscrepancyAlert }> {
+  ): Promise<ReceiveBatchOutcome> {
     const sourceBatch = this.mineralStore.batches().find(b => b.batchId === batchId);
     if (!sourceBatch) {
-      return Promise.resolve({
-        error: `Lote ${batchId} no encontrado en el registro de extracción. Verifique la trazabilidad.`,
-      });
+      return Promise.resolve({ errorKey: 'refinery.err-source-not-found', errorParams: { batchId } });
     }
 
     const alreadyReceived = this.batchesSignal().find(b => b.batchId === batchId);
     if (alreadyReceived) {
       return Promise.resolve({
-        error: `El lote ${batchId} ya fue recibido en refinería el ${this.formatDate(alreadyReceived.receivedAt)}.`,
+        errorKey: 'refinery.err-already-received',
+        errorParams: { batchId, date: this.formatDate(alreadyReceived.receivedAt) },
       });
     }
 
@@ -140,7 +143,7 @@ export class RefineryStore {
 
     // Reflect the reception locally whether or not the backend acknowledges it,
     // then reconcile the batch status in the extraction context (EN_PLANTA).
-    const commit = (persisted: RefineryBatch): { success: true } | { error: string; alert?: WeightDiscrepancyAlert } => {
+    const commit = (persisted: RefineryBatch): ReceiveBatchOutcome => {
       const finalBatch = new RefineryBatch({
         id: persisted.id, batchId, weightKg: receivedWeightKg,
         status: 'Recibido' as RefineryBatchStatus, receivedAt: persisted.receivedAt,
@@ -156,7 +159,10 @@ export class RefineryStore {
         };
         this.discrepancyAlertsSignal.update(as => [...as, alert]);
         return {
-          error: `WeightDiscrepancy: Diferencia de peso ${alert.diffPercent}% excede el límite del 2%. Esperado: ${expectedKg} kg — Recibido: ${receivedWeightKg} kg.`,
+          errorKey: 'refinery.err-discrepancy',
+          errorParams: {
+            diff: String(alert.diffPercent), expected: String(expectedKg), received: String(receivedWeightKg),
+          },
           alert,
         };
       }

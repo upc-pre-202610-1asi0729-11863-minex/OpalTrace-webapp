@@ -1,6 +1,6 @@
 import { Component, inject, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { RefineryStore, WeightDiscrepancyAlert } from '../../../application/refinery.store';
 import { IamStore } from '../../../../iam/application/iam.store';
 import { MineralStore } from '../../../../mineral-extraction/application/mineral.store';
@@ -24,9 +24,10 @@ interface ReceiveResult {
   templateUrl: './receive-batch.html',
 })
 export class ReceiveBatch {
-  private store    = inject(RefineryStore);
-  private iamStore = inject(IamStore);
+  private store     = inject(RefineryStore);
+  private iamStore  = inject(IamStore);
   private mineralStore = inject(MineralStore);
+  private translate = inject(TranslateService);
 
   readonly isPlatinum    = this.iamStore.isPlatinum;
   readonly refineryBatches = computed(() => this.store.batches());
@@ -54,17 +55,21 @@ export class ReceiveBatch {
   onSubmit(): void {
     const id = this.batchId.trim();
     if (!id) {
-      this.result.set({ success: false, error: 'Selecciona o ingresa un ID de lote.' });
+      this.result.set({ success: false, error: this.translate.instant('refinery.err-select-batch') });
       return;
     }
     if (!this.receivedWeightKg || this.receivedWeightKg <= 0) {
-      this.result.set({ success: false, error: 'El peso recibido debe ser un número positivo.' });
+      this.result.set({ success: false, error: this.translate.instant('refinery.err-weight-positive') });
       return;
     }
 
     this.store.receiveBatch(id, this.receivedWeightKg, this.location).then(outcome => {
-      if ('error' in outcome) {
-        this.result.set({ success: false, error: outcome.error, alert: outcome.alert });
+      if ('errorKey' in outcome) {
+        this.result.set({
+          success: false,
+          error: this.translate.instant(outcome.errorKey, outcome.errorParams),
+          alert: outcome.alert,
+        });
       } else {
         this.result.set({ success: true });
         this.submitted.set(true);

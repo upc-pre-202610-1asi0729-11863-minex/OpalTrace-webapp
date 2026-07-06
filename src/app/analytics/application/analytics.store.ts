@@ -122,25 +122,19 @@ export class AnalyticsStore {
     return backend;
   });
 
-  /** Weekly certification chart built from the user's real certificate/batch dates (Mon–Sun). */
-  readonly chartData = computed<CertifiedPerDay[]>(() => {
-    const seg    = this.iam.currentSegment();
-    const labels = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
-    const counts = [0, 0, 0, 0, 0, 0, 0];
-    const bump = (iso: string) => {
-      if (!iso) return;
-      const d = new Date(iso);
-      if (isNaN(d.getTime())) return;
-      counts[(d.getDay() + 6) % 7]++;
-    };
-
+  /** ISO dates of the user's real certification events, used to build the chart series. */
+  readonly certifiedDates = computed<string[]>(() => {
+    const seg = this.iam.currentSegment();
     if (seg === 'JEWELRY') {
-      this.jewelry.certificates().forEach(c => bump(c.issuedAt));
-    } else if (seg === 'MINING') {
-      this.mineralStore.batches().filter(b => b.status === 'Certificado').forEach(b => bump(b.timestamp));
+      return this.jewelry.certificates().map(c => c.issuedAt).filter(Boolean);
     }
-
-    return labels.map((day, i) => ({ day, count: counts[i] }));
+    if (seg === 'MINING') {
+      return this.mineralStore.batches()
+        .filter(b => b.status === 'Certificado')
+        .map(b => b.timestamp)
+        .filter(Boolean);
+    }
+    return [];
   });
 
   readonly esg = computed<EsgMetrics>(() => {
@@ -180,10 +174,6 @@ export class AnalyticsStore {
 
   readonly isPlatinum    = computed(() => this.iam.isPlatinum());
   readonly isGoldOrAbove = computed(() => this.iam.isGoldOrAbove());
-
-  readonly maxChartValue = computed(() =>
-    Math.max(...this.chartData().map(d => d.count), 1)
-  );
 
   constructor() {
     this.loadAll();
