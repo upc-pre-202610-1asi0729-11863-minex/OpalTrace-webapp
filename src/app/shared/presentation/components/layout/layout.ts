@@ -46,6 +46,7 @@ export class Layout {
             { icon: 'ti-list',             label: 'nav.batches',        route: '/mineral/batches' },
             { icon: 'ti-plus',             label: 'nav.register-batch', route: '/mineral/register' },
             { icon: 'ti-truck',            label: 'nav.custody',        route: '/custody/transfer' },
+            { icon: 'ti-map-pin',          label: 'nav.location',       route: '/custody/location' },
             { icon: 'ti-alert-triangle',   label: 'nav.anomalies',          route: '/mineral/alerts' },
             { icon: 'ti-building-factory', label: 'nav.refinery',           route: '/refinery/receive', lock: isPlatinum ? undefined : 'Platinum' },
             { icon: 'ti-refresh',          label: 'nav.sync',               route: '/mineral/sync' },

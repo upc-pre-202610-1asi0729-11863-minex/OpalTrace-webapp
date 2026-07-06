@@ -23,8 +23,8 @@
         <p style="font-size:13px;color:#888;">No hay lotes en tránsito actualmente.</p>
       } @else {
         <select id="batchSelect" name="batchSelect" [(ngModel)]="selectedBatchId">
-          @for (b of transitBatches(); track b.id) {
-            <option [value]="b.id">{{ b.id }} · {{ b.mineral }} · {{ b.weightKg }} kg</option>
+          @for (b of transitBatches(); track b.batchId) {
+            <option [value]="b.batchId">{{ b.batchId }} · {{ b.mineral }} · {{ b.weightKg }} kg</option>
           }
         </select>
       }
@@ -39,6 +39,41 @@
         </div>
       }
     </div>
+  </div>
+
+  <!-- IoT GPS device: the browser acts as the batch tracker -->
+  <div class="ot-card">
+    <div class="ot-card-title">&#128225; {{ 'custody.iot-title' | translate }}</div>
+    <p style="font-size:12px;color:#666;margin:0 0 12px;">{{ 'custody.iot-desc' | translate }}</p>
+
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+      @if (!deviceActive()) {
+        <button type="button" class="ot-btn ot-btn-primary" [disabled]="!selectedBatchId" (click)="startDevice()">
+          &#9654; {{ 'custody.iot-start' | translate }}
+        </button>
+      } @else {
+        <button type="button" class="ot-btn" (click)="stopDevice()">
+          &#9632; {{ 'custody.iot-stop' | translate }}
+        </button>
+        <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#3F816C;font-weight:600;">
+          <span style="width:8px;height:8px;border-radius:50%;background:#3F816C;display:inline-block;animation:pulse 1.2s infinite;"></span>
+          {{ 'custody.iot-streaming' | translate }}
+        </span>
+      }
+    </div>
+
+    @if (lastReading(); as r) {
+      <div style="margin-top:12px;background:#f9f9f7;border:1px solid #e8e8e4;border-radius:8px;padding:10px 14px;font-size:12px;color:#555;">
+        <div><strong>{{ 'custody.iot-last-reading' | translate }}:</strong> {{ r.lat.toFixed(5) }}, {{ r.lon.toFixed(5) }}</div>
+        <div>{{ 'custody.iot-accuracy' | translate }}: ± {{ r.accuracy }} m · {{ 'custody.iot-events-sent' | translate }}: {{ readingCount() }}</div>
+      </div>
+    }
+
+    @if (deviceError()) {
+      <div class="alert-box alert-danger" role="alert" style="margin-top:12px;">
+        <strong>&#10005;</strong> {{ deviceError() }}
+      </div>
+    }
   </div>
 
   <!-- Map placeholder with GPS points -->

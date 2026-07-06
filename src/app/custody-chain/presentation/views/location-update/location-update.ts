@@ -1,6 +1,6 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, OnDestroy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import { CustodyStore } from '../../../application/custody.store';
 import { LocationUpdateRecord as GpsPoint } from '../../../domain/model/location-update.entity';
 import { MineralStore, BatchStatus } from '../../../../mineral-extraction/application/mineral.store';
@@ -8,6 +8,13 @@ import { MineralStore, BatchStatus } from '../../../../mineral-extraction/applic
 interface UpdateResult {
   success: boolean;
   error?: string;
+}
+
+interface DeviceReading {
+  lat: number;
+  lon: number;
+  accuracy: number;
+  time: string;
 }
 
 /**
@@ -18,19 +25,88 @@ interface UpdateResult {
 @Component({
   selector: 'app-location-update',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, TranslatePipe],
   templateUrl: './location-update.html',
 })
-export class LocationUpdate {
+export class LocationUpdate implements OnInit, OnDestroy {
   private custodyStore = inject(CustodyStore);
   private mineralStore = inject(MineralStore);
   private translate    = inject(TranslateService);
 
   /** Form fields */
-  selectedBatchId = 'OT-2025-0013';
+  selectedBatchId = '';
   latInput: number | null = null;
   lonInput: number | null = null;
   result = signal<UpdateResult | null>(null);
+
+  /** IoT GPS device (browser Geolocation acts as the batch tracker) */
+  deviceActive = signal(false);
+  deviceError  = signal<string | null>(null);
+  lastReading  = signal<DeviceReading | null>(null);
+  readingCount = signal(0);
+  private watchId: number | null = null;
+  private lastPosted: string | null = null;
+
+  ngOnInit(): void {
+    const first = this.transitBatches()[0];
+    if (first) this.selectedBatchId = first.batchId;
+  }
+
+  ngOnDestroy(): void {
+    this.stopDevice();
+  }
+
+  startDevice(): void {
+    this.deviceError.set(null);
+    if (!this.selectedBatchId) {
+      this.deviceError.set(this.translate.instant('custody.iot-no-batch'));
+      return;
+    }
+    if (!('geolocation' in navigator)) {
+      this.deviceError.set(this.translate.instant('custody.iot-unsupported'));
+      return;
+    }
+    this.deviceActive.set(true);
+    this.watchId = navigator.geolocation.watchPosition(
+      pos => this.onDeviceReading(pos),
+      () => {
+        this.deviceError.set(this.translate.instant('custody.iot-denied'));
+        this.stopDevice();
+      },
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
+    );
+  }
+
+  stopDevice(): void {
+    if (this.watchId != null) {
+      navigator.geolocation.clearWatch(this.watchId);
+      this.watchId = null;
+    }
+    this.deviceActive.set(false);
+  }
+
+  private onDeviceReading(pos: GeolocationPosition): void {
+    const lat = pos.coords.latitude;
+    const lon = pos.coords.longitude;
+    this.lastReading.set({
+      lat, lon,
+      accuracy: Math.round(pos.coords.accuracy),
+      time: new Date().toISOString(),
+    });
+
+    // Skip stationary duplicates so each emitted event is a real movement.
+    const fingerprint = `${lat.toFixed(5)},${lon.toFixed(5)}`;
+    if (fingerprint === this.lastPosted) return;
+    this.lastPosted = fingerprint;
+
+    this.custodyStore.updateLocation(this.selectedBatchId, lat, lon).then(outcome => {
+      if ('errorKey' in outcome) {
+        this.deviceError.set(this.translate.instant(outcome.errorKey, outcome.errorParams));
+      } else {
+        this.readingCount.update(n => n + 1);
+      }
+    });
+  }
 
   readonly statusSteps: BatchStatus[] = ['En Origen', 'En Tránsito', 'En Planta', 'Certificado'];
 

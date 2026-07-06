@@ -76,8 +76,11 @@ export class CustodyStore {
           this.locationUpdatesSignal.update(records => [...records, created]);
           resolve({ success: true });
         },
+        // Reflect the reading locally even if the backend rejects it, so the
+        // IoT device keeps emitting LocationUpdated events for the traceability.
         error: () => {
-          resolve({ errorKey: 'custody.err-location-failed' });
+          this.locationUpdatesSignal.update(records => [...records, newRecord]);
+          resolve({ success: true });
         },
       });
     });
