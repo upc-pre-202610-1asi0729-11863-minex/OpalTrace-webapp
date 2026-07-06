@@ -62,7 +62,7 @@ export class JewelryStore {
   );
 
   readonly receivedBatches = computed(() =>
-    this.certifiedStockSignal().filter(p => !!p.batchId)
+    this.certifiedStockSignal().filter(p => !!p.batchId && p.certState !== 'CERTIFIED')
   );
 
   constructor() {
@@ -290,6 +290,8 @@ export class JewelryStore {
     const productId = `JEW-${year}-${String(this.extSeq++).padStart(4, '0')}`;
     const certId    = `CERT-${year}-${String(this.certSeq++).padStart(4, '0')}`;
 
+    const issuedAt = new Date().toISOString();
+
     const newProduct = new JewelryProduct({
       id: Date.now(),
       productId,
@@ -304,6 +306,12 @@ export class JewelryStore {
       events: [],
     });
 
+    try {
+      const registry = JSON.parse(localStorage.getItem('ot_certs') ?? '{}');
+      registry[certId] = { productName: data.name, issuedAt, batchId: data.sourceBatchId };
+      localStorage.setItem('ot_certs', JSON.stringify(registry));
+    } catch { /* ignore storage errors */ }
+
     const certificate = new JewelryCertificate({
       id: Date.now() + 1,
       certId,
@@ -311,7 +319,7 @@ export class JewelryStore {
       certState: 'CERTIFIED',
       signatureValid: true,
       batchId: data.sourceBatchId,
-      issuedAt: new Date().toISOString(),
+      issuedAt,
       jewelerName: null,
     });
 

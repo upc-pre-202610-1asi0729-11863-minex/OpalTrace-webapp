@@ -2,6 +2,8 @@ import { Injectable, signal, computed, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { catchError, of } from 'rxjs';
 import { IamStore } from '../../iam/application/iam.store';
+import { JewelryStore } from '../../jewelry-inventory/application/jewelry.store';
+import { MineralStore } from '../../mineral-extraction/application/mineral.store';
 import { AnalyticsMetric } from '../domain/model/analytics-metric.entity';
 import { environment } from '../../../environments/environment';
 
@@ -73,8 +75,10 @@ const FALLBACK_METRICS: AnalyticsMetrics = {
 
 @Injectable({ providedIn: 'root' })
 export class AnalyticsStore {
-  private readonly http = inject(HttpClient);
-  private readonly iam  = inject(IamStore);
+  private readonly http        = inject(HttpClient);
+  private readonly iam         = inject(IamStore);
+  private readonly jewelry     = inject(JewelryStore);
+  private readonly mineralStore = inject(MineralStore);
 
   private readonly baseUrl = `${environment.platformProviderApiBaseUrl}${environment.platformProviderAnalyticsEndpointPath}`;
 
@@ -89,21 +93,35 @@ export class AnalyticsStore {
   readonly chartData   = this.chartSignal.asReadonly();
 
   readonly esg = computed<EsgMetrics>(() => {
-    const m   = this.metricsSignal();
     const seg = this.iam.currentSegment();
-    const certified = m.certified ?? 0;
-    return {
-      mining: (seg === 'MINING' || seg === 'REFINERY') ? {
-        co2Avoided:         `${(certified * 0.56).toFixed(1)} t CO₂`,
-        ethicalCompliance:  m.certRate !== '—' ? m.certRate : '0%',
-        gpsVerifiedBatches: certified,
-      } : undefined,
-      jewelry: (seg === 'JEWELRY') ? {
-        ethicalOriginJewels:   certified,
-        revokedCerts:          m.activeAnomalies ?? 0,
-        consumerVerifications: certified * 2,
-      } : undefined,
-    };
+
+    if (seg === 'MINING') {
+      const batches    = this.mineralStore.batches();
+      const certified  = batches.filter(b => b.status === 'Certificado').length;
+      const total      = batches.length;
+      const compliance = total > 0 ? `${Math.round(certified / total * 100)}%` : '0%';
+      return {
+        mining: {
+          co2Avoided:         `${(certified * 0.56).toFixed(1)} t CO₂`,
+          ethicalCompliance:  compliance,
+          gpsVerifiedBatches: certified,
+        },
+      };
+    }
+
+    if (seg === 'JEWELRY') {
+      const jeweleryCertified = this.jewelry.certifiedCount();
+      const anomalies         = this.jewelry.rejectedCount();
+      return {
+        jewelry: {
+          ethicalOriginJewels:   jeweleryCertified,
+          revokedCerts:          anomalies,
+          consumerVerifications: jeweleryCertified * 2,
+        },
+      };
+    }
+
+    return {};
   });
 
   readonly segment  = computed(() => this.iam.currentSegment());

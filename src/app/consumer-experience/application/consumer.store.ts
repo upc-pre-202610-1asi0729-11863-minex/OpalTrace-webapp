@@ -129,13 +129,32 @@ export class ConsumerStore {
         }));
 
         if (verification.result === 'NOT_VERIFIABLE') {
+          if (mockCert) {
+            return {
+              authentic: true,
+              cert: {
+                certId: id, productName: mockCert.productName,
+                certState: mockCert.certState, issuedAt: mockCert.issuedAt,
+                batchId: mockCert.batchId, events,
+              },
+            } as VerifyResult;
+          }
+          try {
+            const registry = JSON.parse(localStorage.getItem('ot_certs') ?? '{}');
+            const local = registry[id];
+            if (local) {
+              return {
+                authentic: true,
+                cert: {
+                  certId: id, productName: local.productName,
+                  certState: 'CERTIFIED', issuedAt: local.issuedAt,
+                  batchId: local.batchId ?? null, events,
+                },
+              } as VerifyResult;
+            }
+          } catch { /* storage not available */ }
           return {
             authentic: false,
-            cert: mockCert ? {
-              certId: id, productName: mockCert.productName,
-              certState: mockCert.certState, issuedAt: mockCert.issuedAt,
-              batchId: mockCert.batchId, events,
-            } : undefined,
             error: verification.failureReason ?? `Certificado "${certId}" no encontrado en el registro OpalTrace.`,
           } as VerifyResult;
         }
@@ -158,15 +177,27 @@ export class ConsumerStore {
 
   private verifyQrFallback(id: string): VerifyResult {
     const cert = MOCK_CERTIFICATES.find(c => c.certId.toUpperCase() === id);
-    if (!cert) return { authentic: false, error: `Certificado "${id}" no encontrado en el registro OpalTrace.` };
-    const points = MOCK_GEO_POINTS[cert.certId] ?? [];
-    const events = points.map(p => ({
-      type: this.EVENT_LABELS[p.eventType] ?? p.eventType,
-      timestamp: p.timestamp, actor: p.actor ?? '—', txHash: p.txHash,
-    }));
-    if (cert.certState === 'REVOKED')
-      return { authentic: false, cert: { certId: cert.certId, productName: cert.productName, certState: cert.certState, issuedAt: cert.issuedAt, batchId: cert.batchId, events }, error: 'Este certificado ha sido revocado.' };
-    return { authentic: true, cert: { certId: cert.certId, productName: cert.productName, certState: cert.certState, issuedAt: cert.issuedAt, batchId: cert.batchId, events } };
+    if (cert) {
+      const points = MOCK_GEO_POINTS[cert.certId] ?? [];
+      const events = points.map(p => ({
+        type: this.EVENT_LABELS[p.eventType] ?? p.eventType,
+        timestamp: p.timestamp, actor: p.actor ?? '—', txHash: p.txHash,
+      }));
+      if (cert.certState === 'REVOKED')
+        return { authentic: false, cert: { certId: cert.certId, productName: cert.productName, certState: cert.certState, issuedAt: cert.issuedAt, batchId: cert.batchId, events }, error: 'Este certificado ha sido revocado.' };
+      return { authentic: true, cert: { certId: cert.certId, productName: cert.productName, certState: cert.certState, issuedAt: cert.issuedAt, batchId: cert.batchId, events } };
+    }
+    try {
+      const registry = JSON.parse(localStorage.getItem('ot_certs') ?? '{}');
+      const local = registry[id];
+      if (local) {
+        return {
+          authentic: true,
+          cert: { certId: id, productName: local.productName, certState: 'CERTIFIED', issuedAt: local.issuedAt, batchId: local.batchId ?? null, events: [] },
+        };
+      }
+    } catch { /* storage not available */ }
+    return { authentic: false, error: `Certificado "${id}" no encontrado en el registro OpalTrace.` };
   }
 
   getTraceabilityPoints(certId: string): Observable<GeoPoint[]> {
