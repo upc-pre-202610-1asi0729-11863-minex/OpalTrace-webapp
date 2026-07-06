@@ -333,7 +333,8 @@
         <div class="form-group">
           <label class="form-label">{{ 'onboarding.card-number' | translate }} <span class="card-icons"><i class="ti ti-brand-visa"></i> <i class="ti ti-brand-mastercard"></i></span></label>
           <input type="text" formControlName="cardNumber" placeholder="4242 4242 4242 4242" maxlength="19"
-                 [class.invalid]="fieldErr(paymentForm, 'cardNumber')">
+                 [class.invalid]="fieldErr(paymentForm, 'cardNumber')"
+                 (input)="formatCardNumber($event)">
           @if (paymentForm.get('cardNumber')?.touched) {
             @if (paymentForm.get('cardNumber')?.hasError('required')) {
               <span class="field-error">{{ 'onboarding.err-required' | translate }}</span>

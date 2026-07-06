@@ -430,6 +430,14 @@ export class Onboarding implements OnInit {
     });
   }
 
+  formatCardNumber(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const raw = input.value.replace(/\D/g, '').slice(0, 16);
+    const formatted = raw.match(/.{1,4}/g)?.join(' ') ?? raw;
+    input.value = formatted;
+    this.paymentForm.get('cardNumber')!.setValue(formatted, { emitEvent: true });
+  }
+
   formatExpiry(event: Event): void {
     const input = event.target as HTMLInputElement;
     let val = input.value.replace(/\D/g, '');
