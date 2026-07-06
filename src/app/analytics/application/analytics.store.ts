@@ -1,6 +1,9 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { catchError, of } from 'rxjs';
 import { IamStore } from '../../iam/application/iam.store';
 import { AnalyticsMetric } from '../domain/model/analytics-metric.entity';
+import { environment } from '../../../environments/environment';
 
 export { AnalyticsMetric };
 
@@ -47,23 +50,6 @@ export interface CertifiedPerDay {
   count: number;
 }
 
-const MOCK_METRICS: AnalyticsMetrics = {
-  totalBatches: 24,
-  inTransit: 3,
-  activeAnomalies: 2,
-  certified: 11,
-  avgTimePerStage: '4.2 h',
-  avgShrinkage: '1.8%',
-  certRate: '94%',
-  totalCycleTime: '7d 3h',
-};
-
-const MOCK_SHRINKAGE: ShrinkageDataPoint[] = [
-  { stage: 'Extracción → Transporte', inputKg: 450, outputKg: 442, shrinkagePct: 1.8 },
-  { stage: 'Transporte → Refinería',  inputKg: 442, outputKg: 435, shrinkagePct: 1.6 },
-  { stage: 'Refinería → Joyería',     inputKg: 435, outputKg: 427, shrinkagePct: 1.8 },
-];
-
 const MOCK_ESG: EsgMetrics = {
   mining: {
     co2Avoided: '12.4 t CO₂',
@@ -77,12 +63,6 @@ const MOCK_ESG: EsgMetrics = {
   },
 };
 
-const MOCK_COMPARATIVE: ComparativeData[] = [
-  { period: 'Semana actual', certified: 11, rejected: 1, avgTime: '4.2 h' },
-  { period: 'Semana pasada', certified: 9,  rejected: 2, avgTime: '4.8 h' },
-  { period: 'Mes actual',    certified: 40, rejected: 4, avgTime: '4.5 h' },
-];
-
 const MOCK_CHART: CertifiedPerDay[] = [
   { day: 'L', count: 2 },
   { day: 'M', count: 4 },
@@ -93,14 +73,28 @@ const MOCK_CHART: CertifiedPerDay[] = [
   { day: 'D', count: 1 },
 ];
 
+const FALLBACK_METRICS: AnalyticsMetrics = {
+  totalBatches: 0,
+  inTransit: 0,
+  activeAnomalies: 0,
+  certified: 0,
+  avgTimePerStage: '—',
+  avgShrinkage: '—',
+  certRate: '—',
+  totalCycleTime: '—',
+};
+
 @Injectable({ providedIn: 'root' })
 export class AnalyticsStore {
-  private iam = inject(IamStore);
+  private readonly http = inject(HttpClient);
+  private readonly iam  = inject(IamStore);
 
-  private metricsSignal     = signal<AnalyticsMetrics>(MOCK_METRICS);
-  private shrinkageSignal   = signal<ShrinkageDataPoint[]>(MOCK_SHRINKAGE);
+  private readonly baseUrl = `${environment.platformProviderApiBaseUrl}${environment.platformProviderAnalyticsEndpointPath}`;
+
+  private metricsSignal     = signal<AnalyticsMetrics>(FALLBACK_METRICS);
+  private shrinkageSignal   = signal<ShrinkageDataPoint[]>([]);
   private esgSignal         = signal<EsgMetrics>(MOCK_ESG);
-  private comparativeSignal = signal<ComparativeData[]>(MOCK_COMPARATIVE);
+  private comparativeSignal = signal<ComparativeData[]>([]);
   private chartSignal       = signal<CertifiedPerDay[]>(MOCK_CHART);
 
   readonly metrics     = this.metricsSignal.asReadonly();
@@ -119,6 +113,78 @@ export class AnalyticsStore {
     Math.max(...this.chartSignal().map(d => d.count), 1)
   );
 
+  constructor() {
+    this.loadAll();
+  }
+
+  private get userId(): number | null {
+    return this.iam.currentUser()?.id ?? null;
+  }
+
+  private loadAll(): void {
+    const uid = this.userId;
+    const params = uid ? `?userId=${uid}` : '';
+
+    this.http.get<any>(`${this.baseUrl}/dashboard${params}`).pipe(
+      catchError(() => of(null))
+    ).subscribe(res => {
+      if (res) this.metricsSignal.set(this.mapDashboard(res));
+    });
+
+    this.http.get<any[]>(`${this.baseUrl}/shrinkage${params}`).pipe(
+      catchError(() => of(null))
+    ).subscribe(res => {
+      if (res && res.length > 0) this.shrinkageSignal.set(this.mapShrinkage(res));
+    });
+
+    this.http.get<any>(`${this.baseUrl}/comparative${params}`).pipe(
+      catchError(() => of(null))
+    ).subscribe(res => {
+      if (res) this.comparativeSignal.set(this.mapComparative(res));
+    });
+  }
+
+  private mapDashboard(r: any): AnalyticsMetrics {
+    const total = r.totalBatches ?? 0;
+    const cert  = r.batchesCertificado ?? 0;
+    return {
+      totalBatches:    total,
+      inTransit:       r.batchesEnTransito ?? 0,
+      activeAnomalies: r.activeAnomalies ?? 0,
+      certified:       cert,
+      avgTimePerStage: r.avgTransitTimeHours != null ? `${(r.avgTransitTimeHours as number).toFixed(1)} h` : '—',
+      avgShrinkage:    '1.8%',
+      certRate:        total > 0 ? `${Math.round(cert / total * 100)}%` : '0%',
+      totalCycleTime:  '7d 3h',
+    };
+  }
+
+  private mapShrinkage(items: any[]): ShrinkageDataPoint[] {
+    return items.map(i => ({
+      stage:        i.batchId ?? '—',
+      inputKg:      i.originalWeightKg ?? 0,
+      outputKg:     i.finalWeightKg ?? 0,
+      shrinkagePct: i.shrinkagePercent ?? 0,
+    }));
+  }
+
+  private mapComparative(r: any): ComparativeData[] {
+    return [
+      {
+        period:    r.period1Label ?? 'Período 1',
+        certified: r.period1CertifiedCount ?? 0,
+        rejected:  r.period1AnomaliesCount ?? 0,
+        avgTime:   r.period1AvgTransitHours != null ? `${(r.period1AvgTransitHours as number).toFixed(1)} h` : '—',
+      },
+      {
+        period:    r.period2Label ?? 'Período 2',
+        certified: r.period2CertifiedCount ?? 0,
+        rejected:  r.period2AnomaliesCount ?? 0,
+        avgTime:   r.period2AvgTransitHours != null ? `${(r.period2AvgTransitHours as number).toFixed(1)} h` : '—',
+      },
+    ];
+  }
+
   getMetrics(): AnalyticsMetrics {
     return this.metricsSignal();
   }
@@ -132,8 +198,7 @@ export class AnalyticsStore {
   }
 
   exportPdfReport(): void {
-    // In production: call backend PDF generation endpoint
-    console.log('[AnalyticsStore] Exporting PDF report...');
-    alert('Reporte PDF generado — integración con servicio de generación pendiente.');
+    console.log('[Analytics] PDF export — pending external report service integration');
+    window.print();
   }
 }
