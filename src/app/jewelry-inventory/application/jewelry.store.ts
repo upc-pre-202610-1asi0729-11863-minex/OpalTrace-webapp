@@ -160,10 +160,20 @@ export class JewelryStore {
   private static readonly BATCH_ID_FORMAT = /^OT-\d{4}-\d{4}$/;
 
   receiveMaterial(batchId: string): { success: boolean; error?: string } {
-    if (!JewelryStore.BATCH_ID_FORMAT.test(batchId.trim())) {
+    const normalizedId = batchId.trim();
+
+    if (!JewelryStore.BATCH_ID_FORMAT.test(normalizedId)) {
       return {
         success: false,
         error: 'Formato de ID inválido. Use OT-AAAA-NNNN (ej. OT-2026-0001).',
+      };
+    }
+
+    const alreadyReceived = this.certifiedStockSignal().some(p => p.batchId === normalizedId);
+    if (alreadyReceived) {
+      return {
+        success: false,
+        error: `El lote ${normalizedId} ya fue recibido. No puede recibirse más de una vez.`,
       };
     }
 
@@ -179,20 +189,12 @@ export class JewelryStore {
       };
     }
 
-    // Blocked batch simulation: batchId ending in 'X'
-    if (batchId.endsWith('X')) {
-      return {
-        success: false,
-        error: 'Lote bloqueado por anomalía activa. Resuelva la anomalía antes de recibir.',
-      };
-    }
-
     const newProduct = new JewelryProduct({
       id: Date.now(),
       productId: `MAT-${Date.now()}`,
-      name: `Material lote ${batchId}`,
+      name: `Material lote ${normalizedId}`,
       weightG: 100,
-      batchId,
+      batchId: normalizedId,
       certId: null,
       isCertifiedSource: true,
       certState: 'PENDING',

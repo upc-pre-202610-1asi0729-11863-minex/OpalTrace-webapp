@@ -52,16 +52,6 @@ export interface CertifiedPerDay {
   count: number;
 }
 
-const MOCK_CHART: CertifiedPerDay[] = [
-  { day: 'L', count: 2 },
-  { day: 'M', count: 4 },
-  { day: 'X', count: 1 },
-  { day: 'J', count: 3 },
-  { day: 'V', count: 5 },
-  { day: 'S', count: 3 },
-  { day: 'D', count: 1 },
-];
-
 const FALLBACK_METRICS: AnalyticsMetrics = {
   totalBatches: 0,
   inTransit: 0,
@@ -85,12 +75,73 @@ export class AnalyticsStore {
   private metricsSignal     = signal<AnalyticsMetrics>(FALLBACK_METRICS);
   private shrinkageSignal   = signal<ShrinkageDataPoint[]>([]);
   private comparativeSignal = signal<ComparativeData[]>([]);
-  private chartSignal       = signal<CertifiedPerDay[]>(MOCK_CHART);
 
-  readonly metrics     = this.metricsSignal.asReadonly();
   readonly shrinkage   = this.shrinkageSignal.asReadonly();
   readonly comparative = this.comparativeSignal.asReadonly();
-  readonly chartData   = this.chartSignal.asReadonly();
+
+  /** Operational metrics derived from the authenticated user's own domain data. */
+  readonly metrics = computed<AnalyticsMetrics>(() => {
+    const seg     = this.iam.currentSegment();
+    const backend = this.metricsSignal();
+
+    if (seg === 'JEWELRY') {
+      const total     = this.jewelry.certifiedStock().length;
+      const certified = this.jewelry.certifiedCount();
+      const pending   = this.jewelry.pendingCount();
+      const rejected  = this.jewelry.rejectedCount();
+      return {
+        totalBatches:    total,
+        inTransit:       pending,
+        activeAnomalies: rejected,
+        certified,
+        avgTimePerStage: '—',
+        avgShrinkage:    '—',
+        certRate:        total > 0 ? `${Math.round(certified / total * 100)}%` : '0%',
+        totalCycleTime:  '—',
+      };
+    }
+
+    if (seg === 'MINING') {
+      const batches   = this.mineralStore.batches();
+      const total     = batches.length;
+      const certified = batches.filter(b => b.status === 'Certificado').length;
+      const inTransit = batches.filter(b => b.status === 'En Tránsito').length;
+      const anomalies = batches.filter(b => b.isBlocked).length;
+      return {
+        totalBatches:    total,
+        inTransit,
+        activeAnomalies: anomalies,
+        certified,
+        avgTimePerStage: backend.avgTimePerStage,
+        avgShrinkage:    backend.avgShrinkage,
+        certRate:        total > 0 ? `${Math.round(certified / total * 100)}%` : '0%',
+        totalCycleTime:  backend.totalCycleTime,
+      };
+    }
+
+    return backend;
+  });
+
+  /** Weekly certification chart built from the user's real certificate/batch dates (Mon–Sun). */
+  readonly chartData = computed<CertifiedPerDay[]>(() => {
+    const seg    = this.iam.currentSegment();
+    const labels = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+    const counts = [0, 0, 0, 0, 0, 0, 0];
+    const bump = (iso: string) => {
+      if (!iso) return;
+      const d = new Date(iso);
+      if (isNaN(d.getTime())) return;
+      counts[(d.getDay() + 6) % 7]++;
+    };
+
+    if (seg === 'JEWELRY') {
+      this.jewelry.certificates().forEach(c => bump(c.issuedAt));
+    } else if (seg === 'MINING') {
+      this.mineralStore.batches().filter(b => b.status === 'Certificado').forEach(b => bump(b.timestamp));
+    }
+
+    return labels.map((day, i) => ({ day, count: counts[i] }));
+  });
 
   readonly esg = computed<EsgMetrics>(() => {
     const seg = this.iam.currentSegment();
@@ -131,7 +182,7 @@ export class AnalyticsStore {
   readonly isGoldOrAbove = computed(() => this.iam.isGoldOrAbove());
 
   readonly maxChartValue = computed(() =>
-    Math.max(...this.chartSignal().map(d => d.count), 1)
+    Math.max(...this.chartData().map(d => d.count), 1)
   );
 
   constructor() {
@@ -207,7 +258,7 @@ export class AnalyticsStore {
   }
 
   getMetrics(): AnalyticsMetrics {
-    return this.metricsSignal();
+    return this.metrics();
   }
 
   getShrinkageData(): ShrinkageDataPoint[] {
@@ -219,7 +270,6 @@ export class AnalyticsStore {
   }
 
   exportPdfReport(): void {
-    console.log('[Analytics] PDF export — pending external report service integration');
     window.print();
   }
 }
