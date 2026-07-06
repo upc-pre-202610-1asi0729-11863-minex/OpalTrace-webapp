@@ -75,7 +75,12 @@
     "reset-success": "Password reset successfully. Redirecting to sign in...",
     "reset-expired": "The link has expired or is invalid.",
     "reset-request-new": "Request a new link",
-    "reset-back": "Back to Sign In"
+    "reset-back": "Back to Sign In",
+    "error-credentials": "Invalid credentials. Check your email and password.",
+    "error-connection": "Connection error. Please try again.",
+    "error-register": "Registration failed. Please try again.",
+    "error-forgot": "If the email is registered, you will receive a link shortly.",
+    "error-change-password": "Failed to change password."
   },
   "status": {
     "CERTIFIED": "Certified",
@@ -300,7 +305,8 @@
     "feature-esg": "PDF-exportable ESG reports",
     "feature-analytics": "Advanced comparative analysis",
     "cancel": "Cancel",
-    "see-plans": "View plans and upgrade"
+    "see-plans": "View plans and upgrade",
+    "logout-title": "Sign out"
   },
   "common": {
     "loading": "Loading...",

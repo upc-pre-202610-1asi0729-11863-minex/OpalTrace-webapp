@@ -76,7 +76,12 @@
     "reset-success": "Contraseña restablecida correctamente. Redirigiendo al inicio de sesión...",
     "reset-expired": "El enlace ha expirado o no es válido.",
     "reset-request-new": "Solicitar nuevo enlace",
-    "reset-back": "Volver al inicio de sesión"
+    "reset-back": "Volver al inicio de sesión",
+    "error-credentials": "Credenciales incorrectas. Verifica tu correo y contraseña.",
+    "error-connection": "Error de conexión. Intenta nuevamente.",
+    "error-register": "Error al registrar. Intenta nuevamente.",
+    "error-forgot": "Si el correo está registrado, recibirás un enlace en breve.",
+    "error-change-password": "Error al cambiar la contraseña."
   },
   "status": {
     "CERTIFIED": "Certificado",
@@ -301,7 +306,8 @@
     "feature-esg": "Reportes ESG exportables en PDF",
     "feature-analytics": "Análisis comparativo avanzado",
     "cancel": "Cancelar",
-    "see-plans": "Ver planes y actualizar"
+    "see-plans": "Ver planes y actualizar",
+    "logout-title": "Cerrar sesión"
   },
   "common": {
     "loading": "Cargando...",
