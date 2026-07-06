@@ -211,6 +211,23 @@ export class IamStore {
     );
   }
 
+  updateProfile(data: { firstName?: string; lastName?: string; gender?: 'M' | 'F' | null; email?: string }): void {
+    const current = this.currentUserSignal();
+    if (!current) return;
+    const firstName = data.firstName ?? current.firstName;
+    const lastName  = data.lastName  ?? current.lastName;
+    const updated: AuthMockUser = {
+      ...current,
+      firstName,
+      lastName,
+      fullName:  `${firstName} ${lastName}`.trim(),
+      gender:    (data.gender as 'M' | 'F') ?? current.gender,
+      email:     data.email    ?? current.email,
+      username:  data.email    ?? current.username,
+    };
+    this.persist(updated);
+  }
+
   logout(router: Router): void {
     localStorage.removeItem('ot_token');
     localStorage.removeItem('ot_user');

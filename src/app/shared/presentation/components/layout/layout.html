@@ -35,11 +35,13 @@
     <div class="nav-footer">
       <app-language-switcher/>
       <div class="nav-user">
-        <div class="avatar">{{ store.avatarInitials() }}</div>
-        <div class="user-info">
-          <div class="user-name">{{ store.fullName() }}</div>
-          <div class="user-role">{{ store.currentUser()?.role }}</div>
-        </div>
+        <button class="nav-user-btn" (click)="profileOpen.set(true)" [title]="'layout.profile-title' | translate">
+          <div class="avatar">{{ store.avatarInitials() }}</div>
+          <div class="user-info">
+            <div class="user-name">{{ store.fullName() }}</div>
+            <div class="user-role">{{ store.currentUser()?.role }}</div>
+          </div>
+        </button>
         <button class="logout-btn" (click)="logout()" [title]="'layout.logout-title' | translate">
           <i class="ti ti-logout"></i>
         </button>
@@ -52,6 +54,11 @@
     <router-outlet/>
   </main>
 </div>
+
+<!-- PROFILE PANEL -->
+@if (profileOpen()) {
+  <app-profile-panel (close)="profileOpen.set(false)" />
+}
 
 <!-- UPGRADE MODAL -->
 @if (upgradeModal()) {

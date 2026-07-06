@@ -309,7 +309,8 @@
     "feature-analytics": "Advanced comparative analysis",
     "cancel": "Cancel",
     "see-plans": "View plans and upgrade",
-    "logout-title": "Sign out"
+    "logout-title": "Sign out",
+    "profile-title": "View and edit profile"
   },
   "common": {
     "loading": "Loading...",
@@ -352,7 +353,10 @@
     "map-btn": "View Traceability Map",
     "new-btn": "New Verification",
     "retry-btn": "Try another code",
-    "camera-denied": "Could not access the camera. Please check your browser permissions."
+    "camera-denied": "Could not access the camera. Please check your browser permissions.",
+    "qr-upload-btn": "Upload QR image",
+    "qr-reading": "Reading image...",
+    "qr-not-found": "No QR code found in the image. Try with a different photo."
   },
   "my-jewelry": {
     "title": "My Jewelry",
@@ -968,5 +972,35 @@
     "card-desc": "Your consumer account (Silver plan) is designed to verify jewelry. If you manage a mining or jewelry sector company, register with a business account to access all traceability features.",
     "btn-mining": "Register as mining company",
     "btn-jewelry": "Register as jewelry company"
+  },
+  "my-profile": {
+    "title": "My Profile",
+    "personal": "Personal Information",
+    "company": "Company Information",
+    "first-name": "First name",
+    "last-name": "Last name",
+    "gender": "Gender",
+    "email": "Email address",
+    "company-name": "Company name",
+    "ruc": "RUC",
+    "locked-hint": "This field cannot be modified",
+    "save-profile": "Save changes",
+    "profile-saved": "Changes saved successfully",
+    "security": "Security",
+    "current-password": "Current password",
+    "new-password": "New password",
+    "confirm-password": "Confirm password",
+    "save-password": "Change password",
+    "password-saved": "Password updated successfully",
+    "password-mismatch": "Passwords do not match",
+    "billing": "Billing",
+    "card-holder": "Cardholder name",
+    "card-number": "Card number",
+    "expiry-month": "Month",
+    "expiry-year": "Year",
+    "cvv": "CVV",
+    "no-card": "No payment method saved",
+    "save-billing": "Save payment method",
+    "billing-saved": "Payment method saved"
   }
 }

@@ -4,13 +4,14 @@ import { NgClass } from '@angular/common';
 import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import { IamStore } from '../../../../iam/application/iam.store';
 import { LanguageSwitcher } from '../language-switcher/language-switcher';
+import { ProfilePanel } from '../profile-panel/profile-panel';
 
 interface NavItem    { icon: string; label: string; route: string; lock?: string; }
 interface NavSection { label: string; items: NavItem[]; }
 
 @Component({
   selector: 'app-layout',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, NgClass, LanguageSwitcher, TranslatePipe],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, NgClass, LanguageSwitcher, TranslatePipe, ProfilePanel],
   templateUrl: './layout.html',
   styleUrl: './layout.css',
 })
@@ -20,6 +21,7 @@ export class Layout {
   private router = inject(Router);
 
   upgradeModal = signal(false);
+  profileOpen  = signal(false);
 
   openUpgradeModal(item: NavItem, event: Event) {
     if (item.lock) {

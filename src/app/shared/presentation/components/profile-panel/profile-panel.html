@@ -1,0 +1,239 @@
+<div class="pp-overlay" (click)="close.emit()">
+  <div class="pp-modal" (click)="$event.stopPropagation()">
+
+    <!-- Header -->
+    <div class="pp-header">
+      <div class="pp-avatar">{{ store.avatarInitials() }}</div>
+      <div class="pp-header-info">
+        <h2 class="pp-title">{{ 'my-profile.title' | translate }}</h2>
+        <p class="pp-subtitle">{{ store.fullName() }}</p>
+      </div>
+      <button class="pp-close-btn" (click)="close.emit()">
+        <i class="ti ti-x"></i>
+      </button>
+    </div>
+
+    <!-- Body: two columns -->
+    <div class="pp-body">
+
+      <!-- ── LEFT: Personal + Security ── -->
+      <div class="pp-col pp-col-left">
+
+        <!-- Personal info -->
+        <h3 class="pp-section-title">
+          <i class="ti ti-user"></i>
+          {{ isEnterprise() ? ('my-profile.company' | translate) : ('my-profile.personal' | translate) }}
+        </h3>
+
+        <form [formGroup]="profileForm" (ngSubmit)="saveProfile()" class="pp-form">
+
+          @if (isEnterprise()) {
+            <!-- Company Name readonly -->
+            <div class="pp-field">
+              <label class="pp-label">{{ 'my-profile.company-name' | translate }}</label>
+              <div class="pp-locked-wrap">
+                <input class="pp-input pp-input-locked" formControlName="companyName" readonly />
+                <i class="ti ti-lock pp-lock-icon" [title]="'my-profile.locked-hint' | translate"></i>
+              </div>
+            </div>
+            <!-- RUC readonly -->
+            <div class="pp-field">
+              <label class="pp-label">{{ 'my-profile.ruc' | translate }}</label>
+              <div class="pp-locked-wrap">
+                <input class="pp-input pp-input-locked" formControlName="ruc" readonly />
+                <i class="ti ti-lock pp-lock-icon" [title]="'my-profile.locked-hint' | translate"></i>
+              </div>
+            </div>
+          } @else {
+            <!-- First name -->
+            <div class="pp-field-row">
+              <div class="pp-field">
+                <label class="pp-label">{{ 'my-profile.first-name' | translate }}</label>
+                <input class="pp-input" [class.pp-invalid]="fieldErr(profileForm, 'firstName')"
+                       formControlName="firstName" />
+              </div>
+              <div class="pp-field">
+                <label class="pp-label">{{ 'my-profile.last-name' | translate }}</label>
+                <input class="pp-input" [class.pp-invalid]="fieldErr(profileForm, 'lastName')"
+                       formControlName="lastName" />
+              </div>
+            </div>
+            <!-- Gender -->
+            <div class="pp-field">
+              <label class="pp-label">{{ 'my-profile.gender' | translate }}</label>
+              <select class="pp-input" formControlName="gender">
+                <option [ngValue]="null" disabled hidden>{{ 'onboarding.gender-placeholder' | translate }}</option>
+                <option value="M">{{ 'onboarding.gender-m' | translate }}</option>
+                <option value="F">{{ 'onboarding.gender-f' | translate }}</option>
+              </select>
+            </div>
+          }
+
+          <!-- Email (all segments) -->
+          <div class="pp-field">
+            <label class="pp-label">{{ 'my-profile.email' | translate }}</label>
+            <input class="pp-input" [class.pp-invalid]="fieldErr(profileForm, 'email')"
+                   formControlName="email" type="email" />
+          </div>
+
+          @if (profileError()) {
+            <div class="pp-alert pp-alert-err">
+              <i class="ti ti-alert-triangle"></i> {{ profileError() }}
+            </div>
+          }
+          @if (profileSaved()) {
+            <div class="pp-alert pp-alert-ok">
+              <i class="ti ti-check"></i> {{ 'my-profile.profile-saved' | translate }}
+            </div>
+          }
+
+          <button type="submit" class="ot-btn ot-btn-primary pp-save-btn">
+            <i class="ti ti-device-floppy"></i> {{ 'my-profile.save-profile' | translate }}
+          </button>
+        </form>
+
+        <!-- Divider -->
+        <div class="pp-divider"></div>
+
+        <!-- Security / change password -->
+        <h3 class="pp-section-title">
+          <i class="ti ti-shield-lock"></i> {{ 'my-profile.security' | translate }}
+        </h3>
+
+        <form [formGroup]="passwordForm" (ngSubmit)="savePassword()" class="pp-form">
+          <div class="pp-field">
+            <label class="pp-label">{{ 'my-profile.current-password' | translate }}</label>
+            <div class="pp-pw-wrap">
+              <input class="pp-input" [class.pp-invalid]="fieldErr(passwordForm, 'currentPassword')"
+                     formControlName="currentPassword"
+                     [type]="showCurPw() ? 'text' : 'password'" />
+              <button type="button" class="pp-pw-eye" (click)="showCurPw.set(!showCurPw())">
+                <i class="ti" [class.ti-eye]="!showCurPw()" [class.ti-eye-off]="showCurPw()"></i>
+              </button>
+            </div>
+          </div>
+          <div class="pp-field">
+            <label class="pp-label">{{ 'my-profile.new-password' | translate }}</label>
+            <div class="pp-pw-wrap">
+              <input class="pp-input" [class.pp-invalid]="fieldErr(passwordForm, 'newPassword')"
+                     formControlName="newPassword"
+                     [type]="showNewPw() ? 'text' : 'password'" />
+              <button type="button" class="pp-pw-eye" (click)="showNewPw.set(!showNewPw())">
+                <i class="ti" [class.ti-eye]="!showNewPw()" [class.ti-eye-off]="showNewPw()"></i>
+              </button>
+            </div>
+          </div>
+          <div class="pp-field">
+            <label class="pp-label">{{ 'my-profile.confirm-password' | translate }}</label>
+            <input class="pp-input"
+                   [class.pp-invalid]="passwordForm.hasError('mismatch') && passwordForm.get('confirmPassword')?.touched"
+                   formControlName="confirmPassword"
+                   [type]="showNewPw() ? 'text' : 'password'" />
+            @if (passwordForm.hasError('mismatch') && passwordForm.get('confirmPassword')?.touched) {
+              <span class="pp-err-msg">{{ 'my-profile.password-mismatch' | translate }}</span>
+            }
+          </div>
+
+          @if (passwordError()) {
+            <div class="pp-alert pp-alert-err">
+              <i class="ti ti-alert-triangle"></i> {{ passwordError() }}
+            </div>
+          }
+          @if (passwordSaved()) {
+            <div class="pp-alert pp-alert-ok">
+              <i class="ti ti-check"></i> {{ 'my-profile.password-saved' | translate }}
+            </div>
+          }
+
+          <button type="submit" class="ot-btn pp-save-btn">
+            <i class="ti ti-key"></i> {{ 'my-profile.save-password' | translate }}
+          </button>
+        </form>
+      </div>
+
+      <!-- ── RIGHT: Billing ── -->
+      <div class="pp-col pp-col-right">
+        <h3 class="pp-section-title">
+          <i class="ti ti-credit-card"></i> {{ 'my-profile.billing' | translate }}
+        </h3>
+
+        <!-- Card preview -->
+        @if (savedBilling() && savedBilling()!.cardNumber) {
+          <div class="pp-card-preview">
+            <div class="pp-card-brand">{{ cardBrand(savedBilling()!.cardNumber) }}</div>
+            <div class="pp-card-number">{{ maskedNumber(savedBilling()!.cardNumber) }}</div>
+            <div class="pp-card-bottom">
+              <span class="pp-card-holder">{{ savedBilling()!.cardHolder || '–' }}</span>
+              <span class="pp-card-expiry">
+                {{ savedBilling()!.expiryMonth }}/{{ savedBilling()!.expiryYear }}
+              </span>
+            </div>
+          </div>
+        } @else {
+          <div class="pp-no-card">
+            <i class="ti ti-credit-card-off"></i>
+            <span>{{ 'my-profile.no-card' | translate }}</span>
+          </div>
+        }
+
+        <!-- Billing form -->
+        <form [formGroup]="billingForm" (ngSubmit)="saveBilling()" class="pp-form" style="margin-top:16px;">
+          <div class="pp-field">
+            <label class="pp-label">{{ 'my-profile.card-holder' | translate }}</label>
+            <input class="pp-input" formControlName="cardHolder"
+                   placeholder="JUAN PÉREZ" style="text-transform:uppercase;" />
+          </div>
+          <div class="pp-field">
+            <label class="pp-label">{{ 'my-profile.card-number' | translate }}</label>
+            <input class="pp-input" formControlName="cardNumber"
+                   (input)="formatCardInput($event)"
+                   placeholder="1234 5678 9012 3456"
+                   maxlength="19" inputmode="numeric" />
+          </div>
+          <div class="pp-field-row">
+            <div class="pp-field">
+              <label class="pp-label">{{ 'my-profile.expiry-month' | translate }}</label>
+              <select class="pp-input" formControlName="expiryMonth">
+                <option value="">MM</option>
+                @for (m of months; track m) {
+                  <option [value]="m">{{ m }}</option>
+                }
+              </select>
+            </div>
+            <div class="pp-field">
+              <label class="pp-label">{{ 'my-profile.expiry-year' | translate }}</label>
+              <select class="pp-input" formControlName="expiryYear">
+                <option value="">AAAA</option>
+                @for (y of years; track y) {
+                  <option [value]="y">{{ y }}</option>
+                }
+              </select>
+            </div>
+            <div class="pp-field" style="max-width:90px;">
+              <label class="pp-label">{{ 'my-profile.cvv' | translate }}</label>
+              <div class="pp-pw-wrap">
+                <input class="pp-input" formControlName="cvv"
+                       [type]="showCvv() ? 'text' : 'password'"
+                       placeholder="•••" maxlength="4" inputmode="numeric" />
+                <button type="button" class="pp-pw-eye" (click)="showCvv.set(!showCvv())">
+                  <i class="ti" [class.ti-eye]="!showCvv()" [class.ti-eye-off]="showCvv()"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          @if (billingSaved()) {
+            <div class="pp-alert pp-alert-ok">
+              <i class="ti ti-check"></i> {{ 'my-profile.billing-saved' | translate }}
+            </div>
+          }
+
+          <button type="submit" class="ot-btn ot-btn-primary pp-save-btn">
+            <i class="ti ti-device-floppy"></i> {{ 'my-profile.save-billing' | translate }}
+          </button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</div>

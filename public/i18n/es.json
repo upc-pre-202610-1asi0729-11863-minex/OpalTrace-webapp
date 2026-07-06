@@ -310,7 +310,8 @@
     "feature-analytics": "Análisis comparativo avanzado",
     "cancel": "Cancelar",
     "see-plans": "Ver planes y actualizar",
-    "logout-title": "Cerrar sesión"
+    "logout-title": "Cerrar sesión",
+    "profile-title": "Ver y editar perfil"
   },
   "common": {
     "loading": "Cargando...",
@@ -353,7 +354,10 @@
     "map-btn": "Ver Mapa de Trazabilidad",
     "new-btn": "Nueva Verificación",
     "retry-btn": "Intentar con otro código",
-    "camera-denied": "No se pudo acceder a la cámara. Verifica los permisos en tu navegador."
+    "camera-denied": "No se pudo acceder a la cámara. Verifica los permisos en tu navegador.",
+    "qr-upload-btn": "Subir imagen QR",
+    "qr-reading": "Leyendo imagen...",
+    "qr-not-found": "No se encontró un código QR en la imagen. Intenta con otra foto."
   },
   "my-jewelry": {
     "title": "Mis joyas",
@@ -969,5 +973,35 @@
     "card-desc": "Tu cuenta de consumidor (plan Silver) está diseñada para verificar joyas. Si gestionas una empresa del sector minero o joyero, regístrate con una cuenta empresarial para acceder a todas las funcionalidades de trazabilidad.",
     "btn-mining": "Registrarme como minería",
     "btn-jewelry": "Registrarme como joyería"
+  },
+  "my-profile": {
+    "title": "Mi Perfil",
+    "personal": "Información Personal",
+    "company": "Información de Empresa",
+    "first-name": "Nombre",
+    "last-name": "Apellido",
+    "gender": "Género",
+    "email": "Correo electrónico",
+    "company-name": "Nombre de empresa",
+    "ruc": "RUC",
+    "locked-hint": "Este campo no puede modificarse",
+    "save-profile": "Guardar cambios",
+    "profile-saved": "Cambios guardados correctamente",
+    "security": "Seguridad",
+    "current-password": "Contraseña actual",
+    "new-password": "Nueva contraseña",
+    "confirm-password": "Confirmar contraseña",
+    "save-password": "Cambiar contraseña",
+    "password-saved": "Contraseña actualizada correctamente",
+    "password-mismatch": "Las contraseñas no coinciden",
+    "billing": "Facturación",
+    "card-holder": "Titular de la tarjeta",
+    "card-number": "Número de tarjeta",
+    "expiry-month": "Mes",
+    "expiry-year": "Año",
+    "cvv": "CVV",
+    "no-card": "No tienes un método de pago guardado",
+    "save-billing": "Guardar método de pago",
+    "billing-saved": "Método de pago guardado"
   }
 }
