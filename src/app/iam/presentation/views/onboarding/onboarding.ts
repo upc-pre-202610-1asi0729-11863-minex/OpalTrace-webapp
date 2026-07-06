@@ -411,7 +411,9 @@ export class Onboarding implements OnInit {
     if (this.paymentForm.invalid) { this.paymentForm.markAllAsTouched(); return; }
     const profile  = this.selectedProfile()!;
     const segment: Segment = profile === 'CONSUMER' ? 'CONSUMER' : profile === 'MINING' ? 'MINING' : 'JEWELRY';
-    const v = this.dataForm.getRawValue();
+    const v  = this.dataForm.getRawValue();
+    const pv = this.paymentForm.getRawValue();
+    const [expMonth, expYearShort] = pv.expiry.split('/');
     this.registerLoading.set(true);
     this.registerError.set(null);
     this.store.completeOnboarding({
@@ -424,6 +426,13 @@ export class Onboarding implements OnInit {
       companyName: v.companyName,
       ruc:         v.ruc,
       password:    v.password,
+      billing: {
+        cardHolder:  pv.cardName,
+        cardNumber:  pv.cardNumber,
+        expiryMonth: expMonth ?? '',
+        expiryYear:  expYearShort ? `20${expYearShort}` : '',
+        cvv:         pv.cvv,
+      },
     }, this.router).subscribe(result => {
       this.registerLoading.set(false);
       if (result.error) this.registerError.set(this.translate.instant(result.error));
