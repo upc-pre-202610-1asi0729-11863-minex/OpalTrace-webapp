@@ -109,6 +109,9 @@ export class IamStore {
 
   private mapResponse(res: SignInResponse): AuthMockUser {
     const parts = res.fullName?.trim().split(' ') ?? ['', ''];
+    // Preserve gender from existing session if same email (backend doesn't return gender)
+    const stored = (() => { try { const r = localStorage.getItem('ot_user'); return r ? JSON.parse(r) : null; } catch { return null; } })();
+    const gender: 'M' | 'F' = stored?.email === res.email ? (stored.gender ?? 'M') : 'M';
     return {
       id:          res.id,
       username:    res.email,
@@ -122,7 +125,7 @@ export class IamStore {
       firstName:   parts[0] ?? '',
       lastName:    parts.slice(1).join(' ') ?? '',
       fullName:    res.fullName,
-      gender:      'M',
+      gender,
     };
   }
 
@@ -147,7 +150,7 @@ export class IamStore {
   }
 
   completeOnboarding(
-    data: { segment: Segment; planTier: PlanTier; email: string; ruc: string; companyName: string; firstName: string; lastName: string; gender?: 'M' | 'F'; password?: string },
+    data: { segment: Segment; planTier: PlanTier; email: string; ruc: string; companyName: string; firstName: string; lastName: string; gender?: 'M' | 'F'; password?: string; billing?: { cardHolder: string; cardNumber: string; expiryMonth: string; expiryYear: string; cvv: string } },
     router: Router
   ): Observable<{ error: string | null }> {
     const fullName = `${data.firstName} ${data.lastName}`.trim();
@@ -173,6 +176,9 @@ export class IamStore {
         const user = this.mapResponse(res);
         user.gender = data.gender ?? 'M';
         this.persist(user);
+        if (data.billing) {
+          localStorage.setItem(`ot_billing_${user.id}`, JSON.stringify([data.billing]));
+        }
         if (data.segment === 'CONSUMER')      router.navigate(['/verify']);
         else if (data.segment === 'MINING')   router.navigate(['/mineral/dashboard']);
         else                                  router.navigate(['/jewelry/dashboard']);
