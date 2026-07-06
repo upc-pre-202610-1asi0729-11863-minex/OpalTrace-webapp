@@ -82,6 +82,7 @@
     "error-connection": "Error de conexión. Intenta nuevamente.",
     "error-register": "Error al registrar. Intenta nuevamente.",
     "error-forgot": "Si el correo está registrado, recibirás un enlace en breve.",
+    "err-email-not-found": "No existe una cuenta registrada con ese correo.",
     "error-change-password": "Error al cambiar la contraseña."
   },
   "status": {

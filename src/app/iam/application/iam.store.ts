@@ -185,9 +185,12 @@ export class IamStore {
     );
   }
 
-  forgotPassword(email: string): Observable<{ message: string; resetToken: string }> {
+  forgotPassword(email: string): Observable<{ message: string; resetToken: string; error?: string }> {
     return this.http.post<{ message: string; resetToken: string }>(this.forgotPasswordUrl, { email }).pipe(
-      catchError(() => of({ message: 'auth.error-forgot', resetToken: '' }))
+      catchError(err => {
+        const key = err?.status === 404 ? 'auth.err-email-not-found' : 'auth.error-forgot';
+        return of({ message: '', resetToken: '', error: key });
+      })
     );
   }
 

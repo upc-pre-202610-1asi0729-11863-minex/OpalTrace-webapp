@@ -81,6 +81,7 @@
     "error-connection": "Connection error. Please try again.",
     "error-register": "Registration failed. Please try again.",
     "error-forgot": "If the email is registered, you will receive a link shortly.",
+    "err-email-not-found": "No account is registered with that email.",
     "error-change-password": "Failed to change password."
   },
   "status": {
