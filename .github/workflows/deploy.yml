@@ -27,7 +27,7 @@ jobs:
 
       - run: npm ci
 
-      - run: npm run build -- --base-href /OpalTrace-webapp/
+      - run: npx ng build --base-href /OpalTrace-webapp/
         env:
           NODE_OPTIONS: --max_old_space_size=4096
 
