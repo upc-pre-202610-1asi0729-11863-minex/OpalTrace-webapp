@@ -26,12 +26,14 @@ interface RegisterEnterpriseBody {
   companyName: string;
   ruc: string;
   segment: Segment;
+  cardNumber: string;
 }
 
 interface RegisterConsumerBody {
   email: string;
   password: string;
   fullName: string;
+  cardNumber: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -156,11 +158,13 @@ export class IamStore {
     const fullName = `${data.firstName} ${data.lastName}`.trim();
     const password = data.password ?? '';
 
+    const cardNumber = (data.billing?.cardNumber ?? '').replace(/\s/g, '');
     const register$: Observable<unknown> = data.segment === 'CONSUMER'
       ? this.http.post(this.registerConsumerUrl, {
           email:    data.email,
           password,
           fullName,
+          cardNumber,
         } satisfies RegisterConsumerBody)
       : this.http.post(this.registerEnterpriseUrl, {
           email:       data.email,
@@ -168,6 +172,7 @@ export class IamStore {
           companyName: data.companyName,
           ruc:         data.ruc,
           segment:     data.segment,
+          cardNumber,
         } satisfies RegisterEnterpriseBody);
 
     return register$.pipe(
