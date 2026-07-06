@@ -23,12 +23,6 @@ const REQUIRED_EVENTS: TraceabilityEventType[] = [
   'BatchReceived',
 ];
 
-const MOCK_EVENTS: TraceabilityEvent[] = [
-  { type: 'MineralExtracted', timestamp: '2025-05-01T08:00:00Z', actor: 'Minas del Sur', txHash: '0xA1B2C3D4' },
-  { type: 'TransportStarted', timestamp: '2025-05-02T10:00:00Z', actor: 'TransLog S.A.', txHash: '0xE5F6G7H8' },
-  { type: 'LocationUpdated',  timestamp: '2025-05-03T14:00:00Z', actor: 'GPS Auto',      txHash: '0xI9J0K1L2' },
-  { type: 'BatchReceived',    timestamp: '2025-05-04T09:00:00Z', actor: 'Joyería Elite', txHash: '0xM3N4O5P6' },
-];
 
 @Injectable({ providedIn: 'root' })
 export class JewelryStore {
@@ -136,7 +130,7 @@ export class JewelryStore {
       certState: 'PENDING',
       isBlocked: false,
       supplier: null,
-      events: MOCK_EVENTS,
+      events: [],
     });
 
     this.api.createProduct(newProduct).pipe(retry(2)).subscribe({
@@ -298,7 +292,7 @@ export class JewelryStore {
       certState: 'CERTIFIED',
       isBlocked: false,
       supplier: null,
-      events: MOCK_EVENTS,
+      events: [],
     });
 
     const certificate = new JewelryCertificate({

@@ -4,22 +4,22 @@ export const iamRoutes: Routes = [
   {
     path: 'login',
     loadComponent: () => import('./views/login/login').then(m => m.Login),
-    title: 'OpalTrace — Iniciar sesión',
+    title: 'OpalTrace — Sign In',
   },
   {
     path: 'register',
     loadComponent: () => import('./views/register/register').then(m => m.Register),
-    title: 'OpalTrace — Registro empresarial',
+    title: 'OpalTrace — Register',
   },
   {
     path: 'forgot-password',
     loadComponent: () => import('./views/forgot-password/forgot-password').then(m => m.ForgotPassword),
-    title: 'OpalTrace — Recuperar contraseña',
+    title: 'OpalTrace — Password Recovery',
   },
   {
     path: 'reset-password',
     loadComponent: () => import('./views/reset-password/reset-password').then(m => m.ResetPassword),
-    title: 'OpalTrace — Nueva contraseña',
+    title: 'OpalTrace — Reset Password',
   },
   { path: '', redirectTo: 'login', pathMatch: 'full' },
 ];
