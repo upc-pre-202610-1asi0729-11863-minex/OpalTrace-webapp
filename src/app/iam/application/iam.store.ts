@@ -109,11 +109,20 @@ export class IamStore {
     this.isSignedInSignal.set(true);
   }
 
+  // Fallback RUC for demo accounts until backend returns ruc in sign-in response
+  private static readonly DEMO_RUCS: Record<string, string> = {
+    'carolinarmz@geominer.com': '20512345678',
+    'carolina@elegant.com':     '20601234567',
+  };
+
   private mapResponse(res: SignInResponse): AuthMockUser {
     const parts = res.fullName?.trim().split(' ') ?? ['', ''];
-    // Preserve gender from existing session if same email (backend doesn't return gender)
     const stored = (() => { try { const r = localStorage.getItem('ot_user'); return r ? JSON.parse(r) : null; } catch { return null; } })();
-    const gender: 'M' | 'F' = stored?.email === res.email ? (stored.gender ?? 'M') : 'M';
+    const sameUser  = stored?.email === res.email;
+    const gender: 'M' | 'F' = sameUser ? (stored.gender ?? 'M') : 'M';
+    const storedRuc = sameUser ? (stored.ruc || '') : '';
+    const ruc       = storedRuc || IamStore.DEMO_RUCS[res.email] || '';
+    const planTier  = sameUser ? (stored.planTier ?? res.planTier) : res.planTier;
     return {
       id:          res.id,
       username:    res.email,
@@ -121,9 +130,9 @@ export class IamStore {
       token:       res.token,
       segment:     res.segment,
       role:        res.role,
-      planTier:    res.planTier,
+      planTier,
       companyName: res.companyName ?? '',
-      ruc:         stored?.email === res.email ? (stored.ruc ?? '') : '',
+      ruc,
       firstName:   parts[0] ?? '',
       lastName:    parts.slice(1).join(' ') ?? '',
       fullName:    res.fullName,
