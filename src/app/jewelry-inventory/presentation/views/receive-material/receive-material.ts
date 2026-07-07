@@ -43,9 +43,9 @@ export class ReceiveMaterial implements OnDestroy {
   get traceSteps(): TraceStep[] {
     const company = this.iam.currentUser()?.companyName ?? 'Joyería';
     return [
-      { labelKey: 'receive.trace-event-extracted', icon: 'ti-pickaxe',  dot: 'blue',  actor: 'Minas del Sur S.A.C.', timestamp: '2025-05-01T08:00:00Z', txHash: '0xA1B2C3D4' },
-      { labelKey: 'receive.trace-event-transport', icon: 'ti-truck',     dot: 'blue',  actor: 'TransLog S.A.',         timestamp: '2025-05-02T10:00:00Z', txHash: '0xE5F6G7H8' },
-      { labelKey: 'receive.trace-event-location',  icon: 'ti-map-pin',   dot: 'amber', actor: 'GPS Auto — Ruta Sur',   timestamp: '2025-05-03T14:00:00Z', txHash: '0xI9J0K1L2' },
+      { labelKey: 'receive.trace-event-extracted', icon: 'ti-pickaxe',  dot: 'blue',  actor: 'GeoMiner S.A.C.', timestamp: '2026-05-01T08:00:00Z', txHash: '0xA1B2C3D4' },
+      { labelKey: 'receive.trace-event-transport', icon: 'ti-truck',     dot: 'blue',  actor: 'TransLog S.A.',         timestamp: '2026-05-02T10:00:00Z', txHash: '0xE5F6G7H8' },
+      { labelKey: 'receive.trace-event-location',  icon: 'ti-map-pin',   dot: 'amber', actor: 'GPS Auto — Ruta Sur',   timestamp: '2026-05-03T14:00:00Z', txHash: '0xI9J0K1L2' },
       { labelKey: 'receive.trace-event-received',  icon: 'ti-inbox',     dot: 'green', actor: company,                 timestamp: new Date().toISOString(), txHash: '0xM3N4O5P6' },
     ];
   }
