@@ -118,11 +118,13 @@ export class IamStore {
   private mapResponse(res: SignInResponse): AuthMockUser {
     const parts = res.fullName?.trim().split(' ') ?? ['', ''];
     const stored = (() => { try { const r = localStorage.getItem('ot_user'); return r ? JSON.parse(r) : null; } catch { return null; } })();
+    // Profile edits are kept in a separate key that survives logout
+    const savedProfile = (() => { try { const r = localStorage.getItem(`ot_profile_${res.id}`); return r ? JSON.parse(r) : null; } catch { return null; } })();
     const sameUser  = stored?.email === res.email;
-    const gender: 'M' | 'F' = sameUser ? (stored.gender ?? 'M') : 'M';
-    const storedRuc = sameUser ? (stored.ruc || '') : '';
+    const gender: 'M' | 'F' = savedProfile?.gender ?? (sameUser ? (stored?.gender ?? 'M') : 'M');
+    const storedRuc = sameUser ? (stored?.ruc || '') : '';
     const ruc       = storedRuc || IamStore.DEMO_RUCS[res.email] || '';
-    const planTier  = sameUser ? (stored.planTier ?? res.planTier) : res.planTier;
+    const planTier  = sameUser ? (stored?.planTier ?? res.planTier) : res.planTier;
     return {
       id:          res.id,
       username:    res.email,
@@ -133,9 +135,9 @@ export class IamStore {
       planTier,
       companyName: res.companyName ?? '',
       ruc,
-      firstName:   parts[0] ?? '',
-      lastName:    parts.slice(1).join(' ') ?? '',
-      fullName:    res.fullName,
+      firstName:   savedProfile?.firstName ?? parts[0] ?? '',
+      lastName:    savedProfile?.lastName  ?? (parts.slice(1).join(' ') ?? ''),
+      fullName:    savedProfile?.fullName  ?? res.fullName,
       gender,
     };
   }
@@ -248,6 +250,15 @@ export class IamStore {
       username:  data.email    ?? current.username,
     };
     this.persist(updated);
+    // Keep profile edits in a key that survives logout so they're restored on next login
+    try {
+      localStorage.setItem(`ot_profile_${current.id}`, JSON.stringify({
+        firstName: updated.firstName,
+        lastName:  updated.lastName,
+        fullName:  updated.fullName,
+        gender:    updated.gender,
+      }));
+    } catch { /* non-fatal */ }
   }
 
   logout(router: Router): void {
