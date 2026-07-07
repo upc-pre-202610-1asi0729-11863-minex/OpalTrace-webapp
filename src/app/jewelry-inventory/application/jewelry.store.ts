@@ -89,7 +89,7 @@ export class JewelryStore {
     const certs: JewelryCertificate[] = [
       new JewelryCertificate({ id: 901, certId: 'CERT-2026-001', productName: 'Anillo de compromiso — Oro 18K',  certState: 'CERTIFIED', signatureValid: true,  batchId: 'OT-2026-0001', issuedAt: '2026-03-15T14:00:00Z', jewelerName: 'Joyería Elegant S.A.C.' }),
       new JewelryCertificate({ id: 902, certId: 'CERT-2026-002', productName: 'Collar de plata — Diseño andino', certState: 'CERTIFIED', signatureValid: true,  batchId: 'OT-2026-0002', issuedAt: '2026-03-21T11:00:00Z', jewelerName: 'Joyería Elegant S.A.C.' }),
-      new JewelryCertificate({ id: 905, certId: 'CERT-2026-005', productName: 'Dije — Oro 18K Cruz andina',      certState: 'CERTIFIED', signatureValid: true,  batchId: 'OT-2026-0001', issuedAt: '2025-04-02T09:00:00Z', jewelerName: 'Joyería Elegant S.A.C.' }),
+      new JewelryCertificate({ id: 905, certId: 'CERT-2026-005', productName: 'Dije — Oro 18K Cruz andina',      certState: 'CERTIFIED', signatureValid: true,  batchId: 'OT-2026-0001', issuedAt: '2026-04-02T09:00:00Z', jewelerName: 'Joyería Elegant S.A.C.' }),
     ];
     const traceEvents = (batchId: string, certId: string): TraceabilityEvent[] => [
       { type: 'BatchReceived',       timestamp: '2026-03-13T09:00:00Z', actor: 'Joyería Elegant S.A.C.', txHash: `0xE001${certId.slice(-3)}` },
