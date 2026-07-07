@@ -1,4 +1,4 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, inject, effect } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { retry } from 'rxjs/operators';
 import { CustodyApi } from '../infrastructure/custody-api';
@@ -6,9 +6,12 @@ import { LocationUpdateRecord } from '../domain/model/location-update.entity';
 import { MineralStore } from '../../mineral-extraction/application/mineral.store';
 import { MineralApi } from '../../mineral-extraction/infrastructure/mineral-api';
 import { MineralBatch } from '../../mineral-extraction/domain/model/mineral-batch.entity';
+import { IamStore } from '../../iam/application/iam.store';
 
 @Injectable({ providedIn: 'root' })
 export class CustodyStore {
+  private readonly iam = inject(IamStore);
+
   private readonly locationUpdatesSignal = signal<LocationUpdateRecord[]>([]);
   private readonly loadingSignal = signal<boolean>(false);
   private readonly errorSignal = signal<string | null>(null);
@@ -28,7 +31,23 @@ export class CustodyStore {
     private readonly api: CustodyApi,
     private readonly mineralStore: MineralStore,
     private readonly mineralApi: MineralApi
-  ) {}
+  ) {
+    effect(() => {
+      const user = this.iam.currentUser();
+      if (user?.email === 'carolinarmz@geominer.com' && this.locationUpdatesSignal().length === 0) {
+        this.locationUpdatesSignal.set(this.buildDemoGpsPoints());
+      }
+    }, { allowSignalWrites: true });
+  }
+
+  private buildDemoGpsPoints(): LocationUpdateRecord[] {
+    return [
+      new LocationUpdateRecord({ id: 9001, batchId: 'OT-2026-0004', lat: -13.5800, lon: -72.4800, timestamp: '2026-06-10T08:00:00Z', actor: 'IoT GPS Tracker' }),
+      new LocationUpdateRecord({ id: 9002, batchId: 'OT-2026-0004', lat: -13.2500, lon: -73.1000, timestamp: '2026-06-10T14:00:00Z', actor: 'IoT GPS Tracker' }),
+      new LocationUpdateRecord({ id: 9003, batchId: 'OT-2026-0004', lat: -12.8000, lon: -74.4000, timestamp: '2026-06-11T06:00:00Z', actor: 'IoT GPS Tracker' }),
+      new LocationUpdateRecord({ id: 9004, batchId: 'OT-2026-0004', lat: -12.2000, lon: -76.0000, timestamp: '2026-06-11T14:00:00Z', actor: 'IoT GPS Tracker' }),
+    ];
+  }
 
   loadLocationHistoryForBatch(batchPk: number): void {
     this.loadingSignal.set(true);
