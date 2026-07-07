@@ -151,7 +151,13 @@ export class ConsumerStore {
   private loadVerificationHistory(): void {
     this.api.getVerificationHistory().subscribe({
       next: history => {
-        if (history.length > 0) this.verificationLogSignal.set(history);
+        if (history.length === 0) return;
+        // Merge: backend entries take precedence by certId; local-only entries are preserved
+        this.verificationLogSignal.update(current => {
+          const backendIds = new Set(history.map(h => h.certId));
+          const localOnly  = current.filter(e => !backendIds.has(e.certId));
+          return [...history, ...localOnly];
+        });
       },
       // On error, keep the localStorage snapshot already hydrated
     });
