@@ -1,4 +1,4 @@
-import { Injectable, signal, inject, effect } from '@angular/core';
+import { Injectable, signal, inject, effect, untracked } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { retry } from 'rxjs/operators';
 import { CustodyApi } from '../infrastructure/custody-api';
@@ -7,10 +7,16 @@ import { MineralStore } from '../../mineral-extraction/application/mineral.store
 import { MineralApi } from '../../mineral-extraction/infrastructure/mineral-api';
 import { MineralBatch } from '../../mineral-extraction/domain/model/mineral-batch.entity';
 import { IamStore } from '../../iam/application/iam.store';
+import { LocalPersistence } from '../../shared/infrastructure/local-persistence';
+
+interface LocationUpdateProps {
+  id: number; batchId: string; lat: number; lon: number; timestamp: string; actor: string;
+}
 
 @Injectable({ providedIn: 'root' })
 export class CustodyStore {
-  private readonly iam = inject(IamStore);
+  private readonly iam         = inject(IamStore);
+  private readonly persistence = inject(LocalPersistence);
 
   private readonly locationUpdatesSignal = signal<LocationUpdateRecord[]>([]);
   private readonly loadingSignal = signal<boolean>(false);
@@ -32,12 +38,23 @@ export class CustodyStore {
     private readonly mineralStore: MineralStore,
     private readonly mineralApi: MineralApi
   ) {
+    this.hydrateLocationUpdates();
+    effect(() => {
+      this.persistence.write<LocationUpdateProps>('custody-locations', this.locationUpdatesSignal().map(r => ({ id: r.id, batchId: r.batchId, lat: r.lat, lon: r.lon, timestamp: r.timestamp, actor: r.actor })));
+    });
     effect(() => {
       const user = this.iam.currentUser();
-      if (user?.email === 'carolinarmz@geominer.com' && this.locationUpdatesSignal().length === 0) {
-        this.locationUpdatesSignal.set(this.buildDemoGpsPoints());
-      }
+      untracked(() => {
+        if (user?.email === 'carolinarmz@geominer.com' && this.locationUpdatesSignal().length === 0) {
+          this.locationUpdatesSignal.set(this.buildDemoGpsPoints());
+        }
+      });
     }, { allowSignalWrites: true });
+  }
+
+  private hydrateLocationUpdates(): void {
+    const cached = this.persistence.read<LocationUpdateProps>('custody-locations');
+    if (cached.length > 0) this.locationUpdatesSignal.set(cached.map(p => new LocationUpdateRecord(p)));
   }
 
   private buildDemoGpsPoints(): LocationUpdateRecord[] {
