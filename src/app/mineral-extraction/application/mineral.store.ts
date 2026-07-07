@@ -1,4 +1,4 @@
-import { Injectable, inject, signal, computed, effect } from '@angular/core';
+import { Injectable, inject, signal, computed, effect, untracked } from '@angular/core';
 import { retry } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { MineralApi } from '../infrastructure/mineral-api';
@@ -58,6 +58,23 @@ export class MineralStore {
       const props = this.batchesSignal().map(b => this.toProps(b));
       this.persistence.write<MineralBatchProps>('batches', props);
     });
+    effect(() => {
+      const user = this.iam.currentUser();
+      untracked(() => {
+        if (user?.email === 'carolinarmz@geominer.com' && this.batchesSignal().length === 0) {
+          this.batchesSignal.set(this.buildDemoBatches(user.id));
+        }
+      });
+    }, { allowSignalWrites: true });
+  }
+
+  private buildDemoBatches(userId: number): MineralBatch[] {
+    return [
+      new MineralBatch({ id: 9001, batchId: 'OT-2025-0001', mineral: 'Oro',   weightKg: 450, status: 'Certificado', isBlocked: false, gpsLat: -13.5328, gpsLon: -72.4442, timestamp: '2025-03-10T08:00:00Z', txHash: '0xabc1230001', userId }),
+      new MineralBatch({ id: 9002, batchId: 'OT-2025-0002', mineral: 'Plata', weightKg: 320, status: 'Certificado', isBlocked: false, gpsLat: -13.5000, gpsLon: -72.4000, timestamp: '2025-03-12T08:00:00Z', txHash: '0xabc1230002', userId }),
+      new MineralBatch({ id: 9003, batchId: 'OT-2025-0003', mineral: 'Plata', weightKg: 280, status: 'Certificado', isBlocked: false, gpsLat: -13.7800, gpsLon: -72.6230, timestamp: '2025-03-18T08:00:00Z', txHash: '0xabc1230003', userId }),
+      new MineralBatch({ id: 9005, batchId: 'OT-2025-0005', mineral: 'Oro',   weightKg: 500, status: 'Certificado', isBlocked: false, gpsLat: -13.5800, gpsLon: -72.4800, timestamp: '2025-03-20T08:00:00Z', txHash: '0xabc1230005', userId }),
+    ];
   }
 
   private toProps(b: MineralBatch): MineralBatchProps {
