@@ -26,6 +26,7 @@ export const environment = {
 
   // OpalTrace — Consumer Experience
   platformProviderVerificationEventsEndpointPath: '/verify',
+  platformProviderConsumerEndpointPath: '/consumer',
 
   // OpalTrace — Analytics
   platformProviderAnalyticsEndpointPath: '/analytics',

@@ -1,4 +1,4 @@
-import { Injectable, inject, signal, effect } from '@angular/core';
+import { Injectable, inject, signal, effect, untracked } from '@angular/core';
 import { forkJoin, Observable, of } from 'rxjs';
 import { catchError, map, retry } from 'rxjs/operators';
 import { ConsumerApi } from '../infrastructure/consumer-api';
@@ -130,14 +130,31 @@ export class ConsumerStore {
   constructor() {
     this.certificatesSignal.set(MOCK_CERTIFICATES);
     this.hydrateVerificationLog();
+    // Persist to localStorage as offline fallback
     effect(() => {
       this.persistence.write<VerificationLogEntry>('consumer-verifications', this.verificationLogSignal());
+    });
+    // Load from backend once the user session is available
+    effect(() => {
+      const user = this.iam.currentUser();
+      untracked(() => {
+        if (user) this.loadVerificationHistory();
+      });
     });
   }
 
   private hydrateVerificationLog(): void {
     const cached = this.persistence.read<VerificationLogEntry>('consumer-verifications');
     if (cached.length > 0) this.verificationLogSignal.set(cached);
+  }
+
+  private loadVerificationHistory(): void {
+    this.api.getVerificationHistory().subscribe({
+      next: history => {
+        if (history.length > 0) this.verificationLogSignal.set(history);
+      },
+      // On error, keep the localStorage snapshot already hydrated
+    });
   }
 
   saveVerification(result: VerifyResult): void {
@@ -149,13 +166,11 @@ export class ConsumerStore {
       verifiedAt:  new Date().toISOString(),
       authentic:   result.authentic,
     };
+    // Optimistic update — backend already recorded this via verifyQr() → POST /verify/{id}/verify
     this.verificationLogSignal.update(log => {
       if (log.some(e => e.certId === certId)) return log;
       return [entry, ...log];
     });
-    const apiResult: 'AUTHENTIC' | 'NOT_FOUND' | 'REVOKED' = result.authentic ? 'AUTHENTIC' : 'NOT_FOUND';
-    const event = new VerificationEvent({ id: 0, certId, timestamp: entry.verifiedAt, result: apiResult });
-    this.api.verify(certId, event).pipe(retry(2)).subscribe();
   }
 
   private readonly EVENT_LABELS: Record<string, string> = {
