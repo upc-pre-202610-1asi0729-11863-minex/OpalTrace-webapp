@@ -259,6 +259,14 @@ export class IamStore {
         gender:    updated.gender,
       }));
     } catch { /* non-fatal */ }
+    // Sync to backend — best-effort, local state already updated above
+    const profileUrl = `${environment.platformProviderApiBaseUrl}/users/${current.id}/profile`;
+    this.http.put(profileUrl, {
+      firstName: updated.firstName,
+      lastName:  updated.lastName,
+      gender:    updated.gender,
+      email:     updated.email,
+    }).pipe(catchError(() => of(null))).subscribe();
   }
 
   logout(router: Router): void {
