@@ -107,7 +107,7 @@ export class BatchCertificate implements OnInit {
     const company = this.companyName();
     const certId  = `ORIG-${b.batchId}`;
     const issued  = new Date(b.timestamp).toLocaleDateString('es-PE');
-    const qrData  = encodeURIComponent(`https://opaltrace.com/verify/${b.batchId}`);
+    const qrData  = encodeURIComponent(`https://opaltrace.com/verify/${certId}`);
 
     // Load logo and QR in parallel
     const [logoDataUrl, qrDataUrl] = await Promise.all([

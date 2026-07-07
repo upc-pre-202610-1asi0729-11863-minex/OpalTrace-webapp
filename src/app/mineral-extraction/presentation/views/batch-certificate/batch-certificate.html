@@ -122,7 +122,7 @@
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
               <div style="background:#f7f7f5;border-radius:8px;padding:10px 12px;">
                 <div style="font-size:10px;color:#888;margin-bottom:3px;">{{ 'batch-cert.field-company' | translate }}</div>
-                <div style="font-size:12px;font-weight:500;color:#1a1a1a;">Minera Andina S.A.C.</div>
+                <div style="font-size:12px;font-weight:500;color:#1a1a1a;">{{ companyName() }}</div>
               </div>
               <div style="background:#f7f7f5;border-radius:8px;padding:10px 12px;">
                 <div style="font-size:10px;color:#888;margin-bottom:3px;">{{ 'batch-cert.field-zone' | translate }}</div>
@@ -179,7 +179,7 @@
               <!-- QR -->
               <div style="background:#f7f7f5;border-radius:8px;padding:14px;text-align:center;flex-shrink:0;width:130px;">
                 <img
-                  [src]="'https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=' + encodeURIComponent('https://opaltrace.com/verify/' + batch()!.batchId)"
+                  [src]="'https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=' + encodeURIComponent('https://opaltrace.com/verify/' + certId())"
                   alt="QR Trazabilidad"
                   width="80" height="80"
                   style="border-radius:6px;border:1.5px solid #3F816C;margin:0 auto 8px;display:block;" />

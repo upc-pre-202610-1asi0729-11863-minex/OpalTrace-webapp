@@ -70,10 +70,11 @@ export class MineralStore {
 
   private buildDemoBatches(userId: number): MineralBatch[] {
     return [
-      new MineralBatch({ id: 9001, batchId: 'OT-2026-0001', mineral: 'Oro',   weightKg: 450, status: 'Certificado', isBlocked: false, gpsLat: -13.5328, gpsLon: -72.4442, timestamp: '2026-03-10T08:00:00Z', txHash: '0xabc1230001', userId }),
-      new MineralBatch({ id: 9002, batchId: 'OT-2026-0002', mineral: 'Plata', weightKg: 320, status: 'Certificado', isBlocked: false, gpsLat: -13.5000, gpsLon: -72.4000, timestamp: '2026-03-12T08:00:00Z', txHash: '0xabc1230002', userId }),
-      new MineralBatch({ id: 9003, batchId: 'OT-2026-0003', mineral: 'Plata', weightKg: 280, status: 'Certificado', isBlocked: false, gpsLat: -13.7800, gpsLon: -72.6230, timestamp: '2026-03-18T08:00:00Z', txHash: '0xabc1230003', userId }),
-      new MineralBatch({ id: 9005, batchId: 'OT-2026-0005', mineral: 'Oro',   weightKg: 500, status: 'Certificado', isBlocked: false, gpsLat: -13.5800, gpsLon: -72.4800, timestamp: '2026-03-20T08:00:00Z', txHash: '0xabc1230005', userId }),
+      new MineralBatch({ id: 9001, batchId: 'OT-2026-0001', mineral: 'Oro',   weightKg: 450, status: 'Certificado',  isBlocked: false, gpsLat: -13.5328, gpsLon: -72.4442, timestamp: '2026-03-10T08:00:00Z', txHash: '0xabc1230001', userId }),
+      new MineralBatch({ id: 9002, batchId: 'OT-2026-0002', mineral: 'Plata', weightKg: 320, status: 'Certificado',  isBlocked: false, gpsLat: -13.5000, gpsLon: -72.4000, timestamp: '2026-03-12T08:00:00Z', txHash: '0xabc1230002', userId }),
+      new MineralBatch({ id: 9003, batchId: 'OT-2026-0003', mineral: 'Plata', weightKg: 280, status: 'Certificado',  isBlocked: false, gpsLat: -13.7800, gpsLon: -72.6230, timestamp: '2026-03-18T08:00:00Z', txHash: '0xabc1230003', userId }),
+      new MineralBatch({ id: 9004, batchId: 'OT-2026-0004', mineral: 'Oro',   weightKg: 380, status: 'En Tránsito', isBlocked: false, gpsLat: -13.5800, gpsLon: -72.4800, timestamp: '2026-06-10T08:00:00Z', txHash: '0xabc1230004', userId }),
+      new MineralBatch({ id: 9005, batchId: 'OT-2026-0005', mineral: 'Oro',   weightKg: 500, status: 'Certificado',  isBlocked: false, gpsLat: -13.5800, gpsLon: -72.4800, timestamp: '2026-03-20T08:00:00Z', txHash: '0xabc1230005', userId }),
     ];
   }
 
