@@ -61,7 +61,8 @@ export class MineralStore {
     effect(() => {
       const user = this.iam.currentUser();
       untracked(() => {
-        if (user?.email === 'carolinarmz@geominer.com' && this.batchesSignal().length === 0) {
+        const hasStale = this.batchesSignal().some(b => b.batchId.includes('2025'));
+        if (user?.email === 'carolinarmz@geominer.com' && (this.batchesSignal().length === 0 || hasStale)) {
           this.batchesSignal.set(this.buildDemoBatches(user.id));
         }
       });
