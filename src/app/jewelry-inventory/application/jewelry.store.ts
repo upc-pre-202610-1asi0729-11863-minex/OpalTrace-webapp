@@ -76,7 +76,9 @@ export class JewelryStore {
     effect(() => {
       const user = this.iam.currentUser();
       untracked(() => {
-        if (user?.email === 'carolina@elegant.com' && this.certificatesSignal().length === 0) {
+        const hasStale = this.certificatesSignal().some(c => c.certId.includes('2025'))
+                      || this.certifiedStockSignal().some(p => p.productId.includes('2025'));
+        if (user?.email === 'carolina@elegant.com' && (this.certificatesSignal().length === 0 || hasStale)) {
           const { certs, products } = this.buildDemoData(user.id);
           this.certificatesSignal.set(certs);
           this.certifiedStockSignal.set(products);
