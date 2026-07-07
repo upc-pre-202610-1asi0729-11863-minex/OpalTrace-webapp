@@ -1,4 +1,4 @@
-import { Injectable, signal, computed, inject, effect } from '@angular/core';
+import { Injectable, signal, computed, inject, effect, untracked } from '@angular/core';
 import { retry } from 'rxjs/operators';
 import { IamStore } from '../../iam/application/iam.store';
 import { JewelryApi } from '../infrastructure/jewelry-api';
@@ -73,6 +73,35 @@ export class JewelryStore {
       this.persistence.write<JewelryProductProps>('jewelry-external',  this.externalStockSignal().map(p => this.productToProps(p)));
       this.persistence.write<JewelryCertificateProps>('jewelry-certs', this.certificatesSignal().map(c => this.certToProps(c)));
     });
+    effect(() => {
+      const user = this.iam.currentUser();
+      untracked(() => {
+        if (user?.email === 'carolina@elegant.com' && this.certificatesSignal().length === 0) {
+          const { certs, products } = this.buildDemoData(user.id);
+          this.certificatesSignal.set(certs);
+          this.certifiedStockSignal.set(products);
+        }
+      });
+    }, { allowSignalWrites: true });
+  }
+
+  private buildDemoData(_userId: number): { certs: JewelryCertificate[]; products: JewelryProduct[] } {
+    const certs: JewelryCertificate[] = [
+      new JewelryCertificate({ id: 901, certId: 'CERT-2025-001', productName: 'Anillo de compromiso — Oro 18K',  certState: 'CERTIFIED', signatureValid: true,  batchId: 'OT-2025-0001', issuedAt: '2025-03-15T14:00:00Z', jewelerName: 'Joyería Elegant S.A.C.' }),
+      new JewelryCertificate({ id: 902, certId: 'CERT-2025-002', productName: 'Collar de plata — Diseño andino', certState: 'CERTIFIED', signatureValid: true,  batchId: 'OT-2025-0002', issuedAt: '2025-03-21T11:00:00Z', jewelerName: 'Joyería Elegant S.A.C.' }),
+      new JewelryCertificate({ id: 905, certId: 'CERT-2025-005', productName: 'Dije — Oro 18K Cruz andina',      certState: 'CERTIFIED', signatureValid: true,  batchId: 'OT-2025-0001', issuedAt: '2025-04-02T09:00:00Z', jewelerName: 'Joyería Elegant S.A.C.' }),
+    ];
+    const traceEvents = (batchId: string, certId: string): TraceabilityEvent[] => [
+      { type: 'BatchReceived',       timestamp: '2025-03-13T09:00:00Z', actor: 'Joyería Elegant S.A.C.', txHash: `0xE001${certId.slice(-3)}` },
+      { type: 'AuthenticityVerified', timestamp: '2025-03-14T11:00:00Z', actor: 'Joyería Elegant S.A.C.', txHash: `0xE002${certId.slice(-3)}` },
+      { type: 'AuthenticityVerified', timestamp: '2025-03-15T14:00:00Z', actor: 'OpalTrace',               txHash: `0xE003${certId.slice(-3)}` },
+    ];
+    const products: JewelryProduct[] = [
+      new JewelryProduct({ id: 9901, productId: 'JEW-2025-0001', name: 'Anillo de compromiso — Oro 18K',  weightG: 8,  batchId: 'OT-2025-0001', certId: 'CERT-2025-001', isCertifiedSource: true, certState: 'CERTIFIED', isBlocked: false, supplier: null, events: traceEvents('OT-2025-0001', 'CERT-2025-001') }),
+      new JewelryProduct({ id: 9902, productId: 'JEW-2025-0002', name: 'Collar de plata — Diseño andino', weightG: 22, batchId: 'OT-2025-0002', certId: 'CERT-2025-002', isCertifiedSource: true, certState: 'CERTIFIED', isBlocked: false, supplier: null, events: traceEvents('OT-2025-0002', 'CERT-2025-002') }),
+      new JewelryProduct({ id: 9905, productId: 'JEW-2025-0005', name: 'Dije — Oro 18K Cruz andina',      weightG: 5,  batchId: 'OT-2025-0001', certId: 'CERT-2025-005', isCertifiedSource: true, certState: 'CERTIFIED', isBlocked: false, supplier: null, events: traceEvents('OT-2025-0001', 'CERT-2025-005') }),
+    ];
+    return { certs, products };
   }
 
   private productToProps(p: JewelryProduct): JewelryProductProps {

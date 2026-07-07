@@ -150,7 +150,8 @@
                 }
               </td>
               <td>
-                <button class="ot-btn ot-btn-sm" [title]="'certify.download-pdf' | translate">
+                <button class="ot-btn ot-btn-sm" [title]="'certify.download-pdf' | translate"
+                        (click)="downloadCertPdf(cert)">
                   <i class="ti ti-download"></i> PDF
                 </button>
               </td>
