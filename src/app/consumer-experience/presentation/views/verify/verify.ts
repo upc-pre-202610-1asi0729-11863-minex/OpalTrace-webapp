@@ -116,6 +116,7 @@ export class Verify implements OnInit, OnDestroy {
         ...res,
         error: res.errorKey ? this.translate.instant(res.errorKey, res.errorParams) : undefined,
       });
+      this.store.saveVerification(res);
       this.eventLogged.set(true);
       this.loading.set(false);
     });

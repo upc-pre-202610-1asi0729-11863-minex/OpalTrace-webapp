@@ -21,7 +21,7 @@
           </button>
           <input #qrFileInput type="file" accept="image/*" style="display:none"
                  (change)="onQrFileSelected($event)" />
-          <button class="ot-btn" (click)="triggerQrUpload()" [disabled]="cameraLoading() || qrReading()">
+          <button class="ot-btn ot-btn-primary" (click)="triggerQrUpload()" [disabled]="cameraLoading() || qrReading()">
             @if (qrReading()) {
               <i class="ti ti-loader-2"></i> {{ 'verify.qr-reading' | translate }}
             } @else {

@@ -1,9 +1,11 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, inject, signal, effect } from '@angular/core';
 import { forkJoin, Observable, of } from 'rxjs';
 import { catchError, map, retry } from 'rxjs/operators';
 import { ConsumerApi } from '../infrastructure/consumer-api';
 import { ConsumerCertificate } from '../domain/model/consumer-certificate.entity';
 import { VerificationEvent } from '../domain/model/verification-event.entity';
+import { LocalPersistence } from '../../shared/infrastructure/local-persistence';
+import { IamStore } from '../../iam/application/iam.store';
 
 export interface GeoPoint {
   lat: number;
@@ -111,20 +113,49 @@ const MOCK_GEO_POINTS: Record<string, GeoPoint[]> = {
 
 @Injectable({ providedIn: 'root' })
 export class ConsumerStore {
-  private readonly api = inject(ConsumerApi);
+  private readonly api         = inject(ConsumerApi);
+  private readonly persistence = inject(LocalPersistence);
+  private readonly iam         = inject(IamStore);
 
   private readonly certificatesSignal   = signal<ConsumerCertificate[]>([]);
   private readonly verificationLogSignal = signal<VerificationLogEntry[]>([]);
   private readonly loadingSignal         = signal<boolean>(false);
   private readonly errorSignal           = signal<string | null>(null);
 
-  readonly certificates   = this.certificatesSignal.asReadonly();
+  readonly certificates    = this.certificatesSignal.asReadonly();
   readonly verificationLog = this.verificationLogSignal.asReadonly();
   readonly loading         = this.loadingSignal.asReadonly();
   readonly error           = this.errorSignal.asReadonly();
 
   constructor() {
     this.certificatesSignal.set(MOCK_CERTIFICATES);
+    this.hydrateVerificationLog();
+    effect(() => {
+      this.persistence.write<VerificationLogEntry>('consumer-verifications', this.verificationLogSignal());
+    });
+  }
+
+  private hydrateVerificationLog(): void {
+    const cached = this.persistence.read<VerificationLogEntry>('consumer-verifications');
+    if (cached.length > 0) this.verificationLogSignal.set(cached);
+  }
+
+  saveVerification(result: VerifyResult): void {
+    if (!result.cert) return;
+    const certId = result.cert.certId;
+    const entry: VerificationLogEntry = {
+      certId,
+      productName: result.cert.productName,
+      verifiedAt:  new Date().toISOString(),
+      authentic:   result.authentic,
+    };
+    this.verificationLogSignal.update(log => {
+      if (log.some(e => e.certId === certId)) return log;
+      return [entry, ...log];
+    });
+    const apiResult: 'AUTHENTIC' | 'NOT_FOUND' | 'REVOKED' = result.authentic ? 'AUTHENTIC' : 'NOT_FOUND';
+    const event = new VerificationEvent({ id: 0, certId, timestamp: entry.verifiedAt, result: apiResult });
+    this.api.verify(certId, event).pipe(retry(2)).subscribe();
   }
 
   private readonly EVENT_LABELS: Record<string, string> = {
